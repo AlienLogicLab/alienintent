@@ -32,6 +32,11 @@ SCOPE_VIOLATION = "scope-violation"
 VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated",
                                      "feature-regressions-missing", "verification-evidence-invalid",
                                      "mutation-harness-unavailable"})
+# A PRODUCER that could not start because current canonical main could not be fetched (WORK-PREPARATION-REFILL R2,
+# Founder decisions section 44: "Infrastructure failure is not an owner decision"): no work happened, so the coordinator
+# keeps the stage and retries on a later pass, never an authority hold.
+CANONICAL_MAIN_UNAVAILABLE = "canonical-main-unavailable"
+PRODUCER_INFRASTRUCTURE = frozenset({CANONICAL_MAIN_UNAVAILABLE})
 
 
 @dataclass(frozen=True)

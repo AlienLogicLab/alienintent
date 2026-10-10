@@ -19,8 +19,9 @@ from alienintent.evidence_learning.domain.records import ref_from_document
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.domain.runtime import owner_token
-from tests.context_assembly.test_initial_compilation import PROJECT, REPO, Harness, Project, project_clone
+from tests.context_assembly.test_initial_compilation import PROJECT, REPO, Harness, Project, git, project_clone
 from tests.context_assembly.test_readiness_consumer import fixture_package
+from alienintent.context_assembly.domain.work_identity import GitReadFailed
 from tests.context_assembly.test_work_identity_service import commit_file
 
 
@@ -330,10 +331,13 @@ class ReadyBoard(Linked):
         return registry
 
     def packet(self, item, *, payload: dict | None = None, raw: str | None = None) -> bytes:
+        """The packet; with `proof` set, also its targeted proof block (WORK-PREPARATION-REFILL R2)."""
         payload = payload(item) if callable(payload) else payload
         text = raw if raw is not None else json.dumps(payload or contract_payload(item.id), indent=1)
+        proof = getattr(self, "proof", None)
+        block = "" if proof is None else f"\n```json alienintent-proof\n{json.dumps({'targeted_tests': proof})}\n```\n"
         return (f"# Work unit: {item.label}\n\nidentity: not-this-one\n\n```json alienintent-contract\n{text}\n```\n"
-                .encode())
+                f"{block}".encode())
 
     def ready(self, label: str, *, at: str, priority: str | None = "P1", payload=None, raw: str | None = None,
               assess: bool = True, link: bool = True):
@@ -614,6 +618,8 @@ def _registry_run(board, tmp_path, label: str, *, record: dict | None, release: 
     host.write_text(json.dumps({"wipLimit": 1}))
     registry = WorkRegistry(project_configuration(board.document, PROJECT), transport=board.github,
                             host_configuration=host)
+    git(board.clone, "push", "-q", "origin", "main")  # the packet commit is the baseline: on canonical main (WPR R2)
+    assert registry._canonical_main(REPO) == item.pointer.commit
     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
     worker = ScriptedWorker(artifacts, {item.id: ["success"]})
     coordinator = registry.coordinator(worker, artifacts)
@@ -810,6 +816,12 @@ class PlanBoard(ReadyBoard):
         self.document["projects"][PROJECT]["github"]["landing"] = True
         self.configuration_file = root / "project.json"
         self.configuration_file.write_text(json.dumps(self.document))
+        # Canonical main is the remote's (WORK-PREPARATION-REFILL R2): every commit on `main` is pushed, as a landing.
+        hook = self.clone / ".git" / "hooks" / "post-commit"
+        hook.parent.mkdir(exist_ok=True)
+        hook.write_text('#!/bin/sh\n'
+                        '[ "$(git rev-parse --abbrev-ref HEAD)" = main ] && git push -q origin main\nexit 0\n')
+        hook.chmod(0o755)
         self.registry = self.loaded()
         self.links = self.registry.links
 
@@ -887,6 +899,237 @@ def test_a_new_plan_approval_stops_an_item_released_under_the_old_one(plan_board
 
     assert worker.dispatched == []
 
+
+
+def test_one_baseline_revalidation_reads_canonical_main_once_and_judges_every_fact_at_that_sha(plan_board,
+                                                                                                monkeypatch):
+    """WORK-PREPARATION-REFILL R2 (Founder decisions section 43): canonical main moves during one revalidation, first to
+    an unrelated commit, then to a plan that no longer grants the item. One fetched SHA serves the plan authority, the
+    changed paths and the resulting starting revision: the item is retargeted to the first; judged at the second it
+    goes back to preparation."""
+    plan_board.proof = ["tests/composition/test_fixture.py"]
+    item = plan_board.derived("PD-SNAP", plan_board.approve())
+    assert plan_board.registry.release.release(item.id).answer is None
+    baseline = plan_board.registry.context.releases.release_authorization(item.id).baseline
+    first = commit_file(plan_board.clone, "main", "docs/unrelated.md", b"unrelated\n")
+    second = commit_file(plan_board.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
+        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
+    registry, reads = plan_board.loaded(), iter([first, second])
+    calls = []
+    monkeypatch.setattr(registry, "_canonical_main", lambda repository: calls.append(repository) or next(reads))
+    release, decision = registry._revalidate(item.id)
+    assert (calls, release, decision.kind, decision.revision) == ([REPO], baseline, "retarget", first)
+    later = plan_board.loaded()
+    monkeypatch.setattr(later, "_canonical_main", lambda repository: second)
+    release, decision = later._revalidate(item.id)
+    assert (decision.kind, decision.revision) == ("reprepare", baseline)
+    assert [name for name, passed, _ in decision.checks if not passed] == ["plan-authority"]
+
+
+def test_the_live_authority_is_canonical_main_fetched_from_the_remote_not_the_local_branch(plan_board):
+    """Current canonical main is the default branch as fetched from the remote (WORK-PREPARATION-REFILL R2): a plan
+    on the remote and not in the clone's local `main` is the authority; a commit only on local `main` is not."""
+    pushed = commit_file(plan_board.clone, "main", PLAN_PATH, plan_text())
+    git(plan_board.clone, "reset", "-q", "--hard", "HEAD~1")
+    assert plan_board.loaded().plan_approval.current().commit == pushed
+    (plan_board.clone / PLAN_PATH).parent.mkdir(parents=True, exist_ok=True)
+    (plan_board.clone / PLAN_PATH).write_bytes(plan_text(note=" local only"))
+    git(plan_board.clone, "add", PLAN_PATH)
+    git(plan_board.clone, "-c", "core.hooksPath=/dev/null", "-c", "user.name=F", "-c", "user.email=f@example.invalid",
+        "commit", "-qm", "local only")
+    assert plan_board.loaded().plan_approval.current().commit == pushed
+
+
+def test_a_landing_that_only_the_remote_has_never_blocks_the_next_release_or_its_dispatch(plan_board, tmp_path):
+    """WORK-PREPARATION-REFILL R2: after a landing the remote's main is ahead of the clone's local branch, which no
+    factory step moves. The next inherited release takes that canonical main as its baseline and checks it against
+    canonical main, and the dispatch gate admits it; nothing has to pull the clone."""
+    from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+    from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
+    item = plan_board.derived("PD-AHEAD", plan_board.approve())
+    other = tmp_path / "elsewhere"
+    git(tmp_path, "clone", "-q", str(plan_board.root / "remote.git"), str(other))
+    landed = commit_file(other, "main", "docs/landed.md", b"landed\n")
+    git(other, "push", "-q", "origin", "main")
+    registry = plan_board.loaded()
+    assert registry.release.release(item.id).answer is None
+    assert registry.context.releases.release_authorization(item.id).baseline == landed
+    host = tmp_path / "factory-director-host.json"
+    host.write_text(json.dumps({"wipLimit": 1}))
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, {item.id: ["success"]})
+    plan_board.loaded(host).coordinator(worker, artifacts).launch(item.id)
+    assert worker.dispatched == [item.id]
+
+
+def test_an_assessment_never_skips_the_plan_check_on_an_unknown_tip_and_runs_once_main_is_reachable(
+        plan_board, monkeypatch):
+    """A failed fetch of canonical main is not "no plan": assessment holds as typed infrastructure, calls no Agent
+    Ready and writes nothing, never skipping the plan-authority check (Founder decisions section 44); once canonical
+    main is reachable the same item is assessed READY."""
+    from alienintent.composition.work_registry import WorkRegistry
+    from alienintent.context_assembly.application.packet_assessment import CANONICAL_MAIN_UNAVAILABLE
+    digest = plan_board.approve()
+    changes = {"release_policy": "automatic-on", "authority_issuer": "plan-authority:" + digest,
+               "authority_references": [f"{PLAN_PATH} obligation:FIXTURE"],
+               "authorized_scope": ["src/alienintent/composition/x.py"]}
+    item = plan_board.ready("PD-ASSESS", at="2026-10-09T10:00:00Z", link=False, assess=False,
+                            payload=lambda i: satisfiable_payload(i.id, **changes))
+    record = plan_board.registry.records.show(item.id)
+    fetch = WorkRegistry._fetch
+
+    def unreachable(self, repository):
+        raise GitReadFailed("git fetch", repository, "network unreachable")
+    monkeypatch.setattr(WorkRegistry, "_fetch", unreachable)
+    held = plan_board.loaded().assessment.assess(item.id, (record.packet, item.pointer.commit))
+    assert held.reason_code == CANONICAL_MAIN_UNAVAILABLE
+    assert not plan_board.registry.assessment.consumer.history(item.id)
+    monkeypatch.setattr(WorkRegistry, "_fetch", fetch)
+    plan_board.loaded().assessment.assess(item.id, (record.packet, item.pointer.commit))
+    [entry] = plan_board.registry.assessment.consumer.history(item.id)
+    assert entry["outcome"]["disposition"] == "READY"
+
+
+def test_an_outage_never_makes_a_released_plan_derived_item_ineligible(plan_board, tmp_path, monkeypatch):
+    """Eligibility reads the plan at the last fetched canonical main, a local read: a fetch failure during a run never
+    turns a released plan-derived item into "not released" (each PRODUCER and landing re-read canonical main fresh)."""
+    from alienintent.composition.work_registry import WorkRegistry
+    from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+    from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
+    item = plan_board.derived("PD-OUTAGE", plan_board.approve())
+    assert plan_board.registry.release.release(item.id).answer is None
+
+    def unreachable(self, repository):
+        raise GitReadFailed("git fetch", repository, "network unreachable")
+    monkeypatch.setattr(WorkRegistry, "_fetch", unreachable)
+    host = tmp_path / "factory-director-host.json"
+    host.write_text(json.dumps({"wipLimit": 1}))
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, {item.id: ["success"]})
+    plan_board.loaded(host).coordinator(worker, artifacts).start()
+    assert worker.dispatched == [item.id]
+
+
+def test_git_that_cannot_answer_an_ancestry_question_is_unknown_never_diverged(plan_board):
+    from alienintent.composition.work_registry import _is_ancestor
+    head = git(plan_board.clone, "rev-parse", "HEAD").decode().strip()
+    assert (_is_ancestor(plan_board.clone, head, head), _is_ancestor(plan_board.clone, "0" * 40, head)) == (True, None)
+
+
+def test_a_baseline_commit_canonical_main_no_longer_has_is_off_history_never_unavailable(plan_board, monkeypatch):
+    """A release or execution baseline whose object is gone from the clone (force-push, then gc) is not
+    infrastructure: revalidation holds it for preparation and a re-prepared attempt is off canonical main."""
+    from dataclasses import replace as replaced
+    plan_board.proof = ["tests/composition/test_fixture.py"]
+    item = plan_board.derived("PD-GONE", plan_board.approve())
+    assert plan_board.registry.release.release(item.id).answer is None
+    registry = plan_board.loaded()
+    real = registry.context.releases.release_authorization
+    monkeypatch.setattr(registry.context.releases, "release_authorization",
+                        lambda identity: replaced(real(identity), baseline="f" * 40))
+    release, decision = registry._revalidate(item.id)
+    assert (decision.kind, [name for name, passed, _ in decision.checks if not passed]) == (
+        "reprepare", ["baseline-on-main"])
+    assert registry._on_canonical_main("f" * 40) is False
+
+
+def test_containment_reads_the_last_fetched_main_never_a_newer_tip(plan_board, monkeypatch):
+    """PRODUCER containment judges protected paths at the last fetched canonical main; a plan that lands later is
+    seen by the next fetch (CLOSURE's live gate re-checks before any landing), never mid-attempt."""
+    from alienintent.composition.work_registry import WorkRegistry
+    plan_board.approve()
+    registry = plan_board.loaded()
+    assert registry._canonical_main(REPO) is not None
+    fetches = []
+    monkeypatch.setattr(WorkRegistry, "_fetch", lambda self, repository: fetches.append(repository))
+    assert registry.protected_paths() == tuple(PLAN_SCOPE["protected_paths"]) and fetches == []
+
+
+def test_a_local_git_failure_reading_the_last_fetched_main_is_no_answer_never_a_crash(plan_board, monkeypatch):
+    """The last fetched main is a local read: a git timeout there answers None, never an exception escaping into
+    containment or the READY snapshot."""
+    import subprocess
+    from alienintent.composition import work_registry as module
+    registry = plan_board.loaded()
+    real = module.subprocess.run
+
+    def slow(args, *rest, **options):
+        if list(args[:2]) == ["git", "rev-parse"]:
+            raise subprocess.TimeoutExpired(args, 60)
+        return real(args, *rest, **options)
+    monkeypatch.setattr(module.subprocess, "run", slow)
+    assert registry._fetched_main(REPO) is None and registry._fetched_authority() is None
+
+
+def test_a_fetched_canonical_main_reaches_a_clone_of_the_clone(plan_board, tmp_path):
+    """A worker's clone is `git clone --no-local` of the configured clone, which carries local branches only: the
+    fetched canonical main is kept on the local branch `alienintent/canonical-main` too, so a worker can check it out
+    (WORK-PREPARATION-REFILL R2)."""
+    other = tmp_path / "elsewhere"
+    git(tmp_path, "clone", "-q", str(plan_board.root / "remote.git"), str(other))
+    moved = commit_file(other, "main", "docs/elsewhere.md", b"elsewhere\n")
+    git(other, "push", "-q", "origin", "main")
+    assert plan_board.loaded()._canonical_main(REPO) == moved
+    worker = tmp_path / "worker"
+    git(tmp_path, "clone", "-q", "--no-local", str(plan_board.clone), str(worker))
+    git(worker, "checkout", "-q", "--detach", moved)
+
+
+def test_protected_paths_survive_a_failed_fetch_at_the_last_fetched_canonical_main(plan_board, monkeypatch):
+    """A transient fetch failure never turns a candidate's containment into NO_PLAN_AUTHORITY (a false rejection):
+    the protected paths are read at the last fetched canonical main; no plan was ever fetched -> None."""
+    from alienintent.composition.work_registry import WorkRegistry
+    plan_board.approve()
+    registry = plan_board.loaded()
+    assert registry.protected_paths() == tuple(PLAN_SCOPE["protected_paths"])
+
+    def unreachable(self, repository):
+        raise GitReadFailed("git fetch", repository, "network unreachable")
+    monkeypatch.setattr(WorkRegistry, "_fetch", unreachable)
+    assert plan_board.loaded().plan_approval.current() is None
+    assert plan_board.loaded().protected_paths() == tuple(PLAN_SCOPE["protected_paths"])
+
+
+def test_a_re_prepared_attempt_keeps_its_recorded_baseline_only_while_it_is_on_canonical_main(plan_board, tmp_path):
+    """A PRODUCER attempt re-prepared after a crash reuses its recorded execution baseline only while canonical main
+    still contains it; after a rewrite it is held, never run ahead of canonical main (WORK-PREPARATION-REFILL R2)."""
+    from types import SimpleNamespace
+    from alienintent.composition.work_registry import LaunchPreparation
+    registry = plan_board.loaded()
+    recorded = commit_file(plan_board.clone, "main", "docs/recorded.md", b"recorded\n")  # pushed: canonical main
+    context = SimpleNamespace(execution_baseline=lambda identity, key: {"execution_baseline": recorded},
+                              store=SimpleNamespace(read_state=lambda profile, key: (0, {})), store_profile="registry")
+    preparation = LaunchPreparation(context, tmp_path, REPO, baseline=lambda identity: None,
+                                    on_main=registry._on_canonical_main)
+    invocation = SimpleNamespace(work_identity="w", correlation_id="launch:w:0")
+    assert preparation._revalidated(invocation) is None
+    git(plan_board.clone, "checkout", "-q", "-b", "rewrite", f"{recorded}~1")
+    rewritten = commit_file(plan_board.clone, "rewrite", "docs/rewrite.md", b"rewrite\n")
+    git(plan_board.clone, "push", "-q", "--force", "origin", f"{rewritten}:refs/heads/main")
+    held = preparation._revalidated(invocation)
+    assert held.kind == "authority-block" and "baseline-revalidation-required: baseline-on-main" in held.findings[0]
+    unreadable = LaunchPreparation(context, tmp_path, REPO, baseline=lambda identity: None, on_main=lambda sha: None)
+    # Infrastructure, never an authority hold or a Founder decision (Founder decisions section 44).
+    assert unreadable._revalidated(invocation).kind == "canonical-main-unavailable"
+
+
+@pytest.mark.parametrize("move", ["backward", "rewritten"])
+def test_an_item_whose_baseline_canonical_main_no_longer_contains_is_never_run_from_that_baseline(plan_board, move):
+    """WORK-PREPARATION-REFILL R2 (Founder, 2026-10-11): canonical main moved back to an ancestor of the release
+    baseline, or was rewritten past it. Running from the baseline would carry commits main no longer has, so the item
+    goes back to preparation."""
+    plan_board.proof = ["tests/composition/test_fixture.py"]
+    item = plan_board.derived("PD-BACK", plan_board.approve())
+    assert plan_board.registry.release.release(item.id).answer is None
+    baseline = plan_board.registry.context.releases.release_authorization(item.id).baseline
+    target = f"{baseline}~1"
+    if move == "rewritten":
+        git(plan_board.clone, "checkout", "-q", "-b", "rewrite", target)
+        target = commit_file(plan_board.clone, "rewrite", "docs/rewrite.md", b"rewrite\n")
+    git(plan_board.clone, "push", "-q", "--force", "origin", f"{target}:refs/heads/main")
+    release, decision = plan_board.loaded()._revalidate(item.id)
+    assert (release, decision.kind, decision.revision) == (baseline, "reprepare", baseline)
+    assert [name for name, passed, _ in decision.checks if not passed] == ["baseline-on-main"]
 
 
 # --- VERIFICATION-OUTCOME-INTEGRITY: a worker read of a checkout file says "absent" only when it is proven ---------

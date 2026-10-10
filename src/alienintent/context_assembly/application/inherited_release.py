@@ -13,6 +13,11 @@ point: create only, read back, its baseline the default branch's current head) a
 the card: linked if the item has none (`work link`), its text written (`work display`), Status READY and Priority
 the obligation's written and each read back. A rerun after an unconfirmed card writes only the card.
 The release precondition gate is unchanged and re-checks the record before every PRODUCER.
+
+Current canonical main is fetched once (`head`) and the plan authority is read at exactly that commit
+(WORK-PREPARATION-REFILL R2). When it cannot be fetched the answer is CANONICAL_MAIN_UNAVAILABLE: typed infrastructure,
+retried by the caller, nothing written and never an owner decision ("Infrastructure failure is not an owner decision",
+Founder decisions section 44); no last-known tip ever grants a release.
 """
 from __future__ import annotations
 
@@ -41,6 +46,8 @@ from alienintent.execution_coordination.ports.release_admission import RevisionR
 NOT_RELEASABLE, ASSESSMENT_MISSING, NOT_PLAN_DERIVED = "NOT_RELEASABLE", "ASSESSMENT_MISSING", "NOT_PLAN_DERIVED"
 OWNER_DECISION_REQUIRED, GATE_WOULD_REFUSE, CARD_UNCONFIRMED = \
     "OWNER_DECISION_REQUIRED", "GATE_WOULD_REFUSE", "CARD_UNCONFIRMED"
+# Current canonical main could not be fetched: retry; nothing was written and no owner decision was raised.
+CANONICAL_MAIN_UNAVAILABLE = "CANONICAL_MAIN_UNAVAILABLE"
 INHERITED_RELEASE = "inherited-release"
 INHERITED = "inherited from plan authority"
 
@@ -78,11 +85,12 @@ class InheritedRelease:
     def __init__(self, records: WorkRecordService, identities: WorkIdentityService, consumer: AssessmentConsumer,
                  evidence: EvidenceRepository, project: str, profile: str, releases: ReleaseRecords,
                  revisions: RevisionResolver, release_points: Mapping[str, str], head: Callable[[str], str | None],
-                 authority: Callable[[], PlanAuthority | None],
+                 authority: Callable[[str], PlanAuthority | None],
                  satisfiable: Callable[[bytes, str, str, PlanAuthority], tuple[str, ...]], owner_decision: Callable[[str], None],
                  links: Links) -> None:
-        """`head(repository)` answers the default branch's current head in its configured clone; `authority` the
-        current plan authority; `satisfiable` the composed check with it; `owner_decision(identity)` ensures the
+        """`head(repository)` answers current canonical main, fetched now, or None when it cannot be fetched;
+        `authority(commit)` the plan authority at that commit; `satisfiable` the composed check with it;
+        `owner_decision(identity)` ensures the
         item's owner-decision attention item."""
         self.records, self.identities, self.consumer, self.evidence = records, identities, consumer, evidence
         self.releases, self.revisions, self.release_points, self.head = releases, revisions, dict(release_points), head
@@ -117,7 +125,12 @@ class InheritedRelease:
             return ReleaseResult(item.id, CONTRACT_INVALID, detail=str(error))
         if contract.release_policy != "automatic-on":
             return ReleaseResult(item.id, NOT_PLAN_DERIVED, detail=f"release_policy {contract.release_policy}")
-        authority = self.authority()
+        repo = item.pointer.repo
+        baseline = self.head(repo)  # current canonical main, fetched once: the authority and the baseline
+        if baseline is None:
+            return ReleaseResult(item.id, CANONICAL_MAIN_UNAVAILABLE,
+                                 detail="current canonical main could not be fetched; retry")
+        authority = self.authority(baseline)
         reasons = ("no readable plan authority at the tip of main",) if authority is None \
             else self.satisfiable(record.packet, item.pointer.commit, item.id, authority)  # checked against this read
         if reasons:
@@ -127,10 +140,9 @@ class InheritedRelease:
         if existing is not None:  # This release was recorded; only its card was unconfirmed.
             return self._card(item.id, priority, ReleaseResult(item.id, None, asdict(item.approval_ref),
                                                                asdict(existing), repeated=True))
-        repo = item.pointer.repo
         prepared = contract.authority_issuer.removeprefix("plan-authority:")  # the revision it was prepared from
-        release_point, baseline = self.release_points.get(repo), self.head(repo)
-        resolves = release_point is not None and baseline is not None and self.revisions.resolves(repo, baseline)
+        release_point = self.release_points.get(repo)
+        resolves = release_point is not None and self.revisions.resolves(repo, baseline)
         reachable = resolves and self.revisions.is_reachable(repo, baseline, release_point)
         evidence = Observation(
             Header(self.definition.project, self.definition.profile, f"{INHERITED_RELEASE}/{item.id}", "1",

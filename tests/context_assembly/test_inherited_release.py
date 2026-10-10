@@ -77,6 +77,30 @@ def test_an_item_prepared_under_an_older_plan_revision_is_revalidated_and_releas
     assert package_evidence["plan"] == {"commit": tip, "content_digest": live, "prepared_from": older}
 
 
+def test_a_fetch_failure_writes_nothing_raises_no_owner_decision_and_the_same_item_is_released_on_retry(
+        fx, monkeypatch):
+    """WORK-PREPARATION-REFILL R2 (Founder decisions section 44: "Infrastructure failure is not an owner decision"):
+    canonical main cannot be fetched, twice; each answer is typed infrastructure, nothing is written, no owner decision
+    is raised and no last-known tip is used. Once canonical main is reachable the same work item is released."""
+    from alienintent.composition.work_registry import WorkRegistry
+    from alienintent.context_assembly.application.inherited_release import CANONICAL_MAIN_UNAVAILABLE
+    from alienintent.context_assembly.domain.work_identity import GitReadFailed
+    item = fx.derived("PD-FETCH", fx.approve())
+    fetch = WorkRegistry._fetch
+
+    def unreachable(self, repository):
+        raise GitReadFailed("git fetch", repository, "network unreachable")
+    monkeypatch.setattr(WorkRegistry, "_fetch", unreachable)
+    before = state(fx, item.id)
+    for _ in range(2):
+        result = fx.loaded().release.release(item.id)
+        assert (result.answer, result.evidence_ref) == (CANONICAL_MAIN_UNAVAILABLE, None)
+    assert state(fx, item.id) == before and owner_decisions(fx, item.id) == []
+    monkeypatch.setattr(WorkRegistry, "_fetch", fetch)
+    assert fx.loaded().release.release(item.id).answer is None
+    assert state(fx, item.id)[0] is not None and owner_decisions(fx, item.id) == []
+
+
 @pytest.mark.parametrize("case", ["released", "held", "explicit", "older-plan"])
 def test_each_refusal_answers_its_code_and_writes_nothing(fx, case):
     digest = fx.approve()

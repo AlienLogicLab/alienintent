@@ -30,6 +30,10 @@ from alienintent.execution_coordination.ports.readiness import AssessmentConsume
 
 # The worker runtime's answer for an owner process that has conclusively ended.
 TERMINATED = "terminated"
+# The satisfiability reason when current canonical main cannot be fetched, so its plan authority cannot be checked,
+# and the hold it gives: typed infrastructure, retried, never CONTRACT_UNSATISFIABLE (WORK-PREPARATION-REFILL R2,
+# Founder decisions section 44).
+UNAVAILABLE_REASON, CANONICAL_MAIN_UNAVAILABLE = "canonical-main-unavailable", "CANONICAL_MAIN_UNAVAILABLE"
 
 
 class ProcessOwnership(Protocol):
@@ -90,7 +94,8 @@ class PacketAssessment:
         if self.satisfiable is not None:
             reasons = self.satisfiable(record.packet, item.pointer.commit, item.id)
             if reasons:
-                return Hold(CONTRACT_UNSATISFIABLE, item.id, None, "; ".join(reasons))
+                code = CANONICAL_MAIN_UNAVAILABLE if UNAVAILABLE_REASON in reasons else CONTRACT_UNSATISFIABLE
+                return Hold(code, item.id, None, "; ".join(reasons))
         text = instructions_text(record.packet)
         current, input_sha256 = fingerprint(item.id, item.pointer), digest(text)
         history = self.consumer.history(item.id)

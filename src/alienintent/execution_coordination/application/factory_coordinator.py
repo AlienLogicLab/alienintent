@@ -9,8 +9,8 @@ from typing import Callable, Iterable, Mapping
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore, verify_in_fresh_process
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.execution_coordination.domain.closure import (
-    ACTIONS, CANDIDATE_PUBLISHED, CLOSURE_HOLD, CLOSURE_REWORK, READY_TO_LAND, REQUEST_REFUSALS, is_fixed, parse_finding,
-    parse_receipt)
+    ACTIONS, CANDIDATE_PUBLISHED, CLOSURE_HOLD, CLOSURE_INFRASTRUCTURE, CLOSURE_REWORK, READY_TO_LAND, REQUEST_REFUSALS,
+    is_fixed, parse_finding, parse_receipt)
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
@@ -20,25 +20,31 @@ from alienintent.execution_coordination.domain.verdict import EvidenceDefinition
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
 from alienintent.execution_coordination.ports.release_admission import ExecutionAllocation
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
-from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, NO_CHANGE, PRODUCER, SCOPE_VIOLATION, VERIFIER, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, NO_CHANGE, PRODUCER, PRODUCER_INFRASTRUCTURE, SCOPE_VIOLATION, VERIFIER, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
 
 # K2: each nonterminal stage is advanced by exactly one canonical role.
 ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERIFIER, LifecycleStage.ACCEPT: CLOSURE}
 # Execution-record fields that survive every later commit of the same aggregate.
 CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict",
-           "closure_retries", "verifier_retries")
+           "closure_retries", "verifier_retries", "producer_retries", "closure_infrastructure_retries")
 # A malformed CLOSURE request: the item stays at ACCEPT and the next launch runs a fresh CLOSURE session.
 CLOSURE_RETRY = "closure-retry"
 # A VERIFIER that ended without a valid verdict: the item stays at VERIFY on the same candidate and the next launch runs
 # a fresh VERIFIER, at most VERIFIER_RETRY_LIMIT times in a row; then a typed infrastructure hold.
 VERIFIER_RETRY, VERIFIER_RETRY_LIMIT = "verifier-retry", 2
+# A PRODUCER that could not start for infrastructure (PRODUCER_INFRASTRUCTURE: canonical main unreadable) did no work:
+# the item stays at IMPLEMENT and a later pass retries, within the same bound; then INFRASTRUCTURE_HOLD, a typed hold
+# that is neither an authority block nor a Founder decision (Founder decisions section 44) and that the next run of
+# the factory (a new coordinator) retries with a fresh count.
+PRODUCER_RETRY, INFRASTRUCTURE_HOLD = "producer-retry", "infrastructure-hold"
+INFRASTRUCTURE_COUNTERS = {PRODUCER: "producer_retries", CLOSURE: "closure_infrastructure_retries"}
 # One WIP slot per admitted work item, held until its recorded state is DONE or a final outcome: an outcome the
 # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
 WIP_SCOPE = "wip"
 FINAL_OUTCOMES = frozenset({"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"})
 # Outcomes a later pass retries on the same stage; `run` pauses before that pass so a short outage is not spent at once.
-RETRY_OUTCOMES = frozenset({VERIFIER_RETRY, CLOSURE_RETRY, MISSING_TERMINAL_RESULT})
+RETRY_OUTCOMES = frozenset({VERIFIER_RETRY, PRODUCER_RETRY, CLOSURE_RETRY, MISSING_TERMINAL_RESULT})
 # `launch` answers that launch nothing.
 CLOSURE_NOT_AUTOMATED, NOT_ELIGIBLE = "closure-not-automated", "not-eligible"
 # The one registry-wide `work launch` reservation (an ordinary store reservation). Only `work launch` takes and releases
@@ -86,6 +92,8 @@ class RunSummary:
     failed: tuple[str, ...] = ()
     # Every work item a role ran for, once per role run, in order.
     ran: tuple[str, ...] = ()
+    # Work items held as typed infrastructure (INFRASTRUCTURE_HOLD): no decision is needed; the next run retries them.
+    infrastructure_held: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -124,6 +132,8 @@ class FactoryCoordinator:
         # (when the READY view no longer lists it) and the DONE projection hook, which never raises into this class.
         self._landing_enabled, self._started_item, self._completed = landing_enabled, started_item, completed
         self.projection_diagnostics: dict[str, str] = {}
+        # Work items this coordinator held as INFRASTRUCTURE_HOLD: not run again by it; the next coordinator retries.
+        self._infrastructure_held: set[str] = set()
 
     def start(self) -> RunSummary:
         items = self._with_started(self._work.import_ready_snapshot())
@@ -141,7 +151,7 @@ class FactoryCoordinator:
             if self._role(item.identity) == CLOSURE:
                 once.add(item.identity)
             result = self._run(item)
-            if self._outcome(item.identity) == VERIFIER_RETRY:
+            if self._outcome(item.identity) in {VERIFIER_RETRY, PRODUCER_RETRY}:
                 once.add(item.identity)
             if isinstance(result, _WipSkip):
                 skipped[item.identity] = result
@@ -160,6 +170,7 @@ class FactoryCoordinator:
             tuple(item.identity for item in items if self._outcome(item.identity) == "authority-block"),
             tuple(item.identity for item in items if self._outcome(item.identity) in {"failure", "timeout"}),
             tuple(ran),
+            tuple(item.identity for item in items if self._outcome(item.identity) == INFRASTRUCTURE_HOLD),
         )
 
     def run(self, pause: Callable[[], None] = lambda: None) -> RunSummary:
@@ -230,7 +241,8 @@ class FactoryCoordinator:
         outcome = self._outcome(identity)
         return RunSummary(result or self._stop_reason((item,)), (identity,) if result is None and producing else (),
                           (identity,) if outcome == "authority-block" else (),
-                          (identity,) if outcome in {"failure", "timeout"} else ())
+                          (identity,) if outcome in {"failure", "timeout"} else (),
+                          infrastructure_held=(identity,) if outcome == INFRASTRUCTURE_HOLD else ())
 
     def state(self, identity: str) -> ProjectedState:
         _, raw = self._store.read_state(self._profile, self._aggregate(identity))
@@ -257,6 +269,8 @@ class FactoryCoordinator:
             reason = "terminal"
         elif outcome in {"authority-block", "blocked-by-authority"}:
             reason = "authority-block"
+        elif outcome == INFRASTRUCTURE_HOLD and identity in self._infrastructure_held:
+            reason = INFRASTRUCTURE_HOLD
         elif item is None:
             reason = "not-in-upstream-ready-snapshot"
         elif not all(self._dependency_done(dependency) for dependency in item.dependencies):
@@ -380,6 +394,8 @@ class FactoryCoordinator:
             projected = self.state(item.identity)
             if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"}:
                 return False
+            if projected.outcome == INFRASTRUCTURE_HOLD and item.identity in self._infrastructure_held:
+                return False
             if projected.stage not in ROLE_BY_STAGE:
                 return False
             if projected.stage is LifecycleStage.ACCEPT and projected.outcome == READY_TO_LAND \
@@ -409,12 +425,12 @@ class FactoryCoordinator:
                     capabilities.update(item.contract.required_capabilities)
                 admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), self._available_budget(item, raw), "offline-profile", source))
             except ReleasePreconditionRefused as refusal:
-                self._record_result(item, current, "release", "authority-block", {"hold_reason": f"release-precondition:{refusal.check}"})
+                self._record_result(item, current, "release", "authority-block", {"hold_reason": f"release-precondition:{refusal.check}", "producer_retries": 0})
                 self._register_escalation(self._authority_request(item, current.version, f"Release precondition refused: {refusal}."))
                 self._block_dependents(item, self._work.import_ready_snapshot())
                 return StopReason.BLOCKED
             except ValueError:
-                self._record_result(item, current, "release", "authority-block")
+                self._record_result(item, current, "release", "authority-block", {"producer_retries": 0})
                 self._register_escalation(self._authority_request(item, current.version, "Release admission requires authority not present in this profile."))
                 self._block_dependents(item, self._work.import_ready_snapshot())
                 return StopReason.BLOCKED
@@ -465,7 +481,8 @@ class FactoryCoordinator:
             advanced = self._advance(item, current, prepared, invocation, outcome)
             unresolved = self._has_unresolved_effect(item.identity)
             if unresolved:
-                self._record_result(item, current, correlation, "authority-block")
+                self._record_result(item, current, correlation, "authority-block",
+                                    {INFRASTRUCTURE_COUNTERS[role]: 0} if role in INFRASTRUCTURE_COUNTERS else {})
                 self._register_escalation(self._authority_request(item, current.version, "The external effect outcome is unknown and requires reconciliation authority."))
                 self._block_dependents(item, self._work.import_ready_snapshot())
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
@@ -519,6 +536,15 @@ class FactoryCoordinator:
         return outcome.kind, outcome.candidate, tuple(outcome.findings), tuple(outcome.receipts)
 
     def _advance(self, item: ReadyWorkItem, current: ExecutionState, prior: dict[str, object], invocation: WorkerInvocation, outcome: WorkerOutcome) -> _Advance:
+        """`_advance_role`, with the role's infrastructure retry count reset by any outcome that is not infrastructure,
+        so the bound counts failures in a row."""
+        advanced = self._advance_role(item, current, prior, invocation, outcome)
+        counter = INFRASTRUCTURE_COUNTERS.get(invocation.role)
+        if counter is not None and counter not in advanced.fields:
+            advanced = replace(advanced, fields=advanced.fields | {counter: 0})
+        return advanced
+
+    def _advance_role(self, item: ReadyWorkItem, current: ExecutionState, prior: dict[str, object], invocation: WorkerInvocation, outcome: WorkerOutcome) -> _Advance:
         """The canonical lifecycle consequence of one correlated role outcome.
 
         Producer success advances only to VERIFY. Only a distinct verifier's
@@ -533,6 +559,8 @@ class FactoryCoordinator:
             # own role on the same custodied candidate, bounded at launch.
             return _Advance(current, outcome.kind, {})
         if invocation.role == PRODUCER:
+            if outcome.kind in PRODUCER_INFRASTRUCTURE:
+                return self._retry_producer(item, current, prior, outcome.kind)
             if outcome.kind in {NO_CHANGE, SCOPE_VIOLATION}:
                 return self._rework(item, current, prior, invocation, "producer", tuple(outcome.findings))
             if outcome.kind != "success" or outcome.candidate is None:
@@ -541,7 +569,8 @@ class FactoryCoordinator:
             # candidate retrieval rather than trusting a producer-set assertion.
             verified = verify_in_fresh_process(outcome.candidate, self._artifacts.verifier_root)
             return _Advance(transition(current, current.version, "verify", candidate=verified), "success",
-                            {"producer_correlation": invocation.correlation_id, "verifier_retries": 0})
+                            {"producer_correlation": invocation.correlation_id, "verifier_retries": 0,
+                             "producer_retries": 0})
         if invocation.role == VERIFIER:
             if outcome.kind in VERIFIER_INFRASTRUCTURE:
                 return self._retry_verifier(current, prior, outcome.kind)
@@ -595,6 +624,10 @@ class FactoryCoordinator:
             if CLOSURE_REWORK in kinds and CLOSURE_HOLD not in kinds:
                 return self._rework(item, current, prior, invocation, "closure", tuple(outcome.findings))
             held = next((parts for kind, parts in control if kind == CLOSURE_HOLD), None)
+            if held is not None and held[0] in CLOSURE_INFRASTRUCTURE:
+                return self._retry_infrastructure(item, state=current, prior=prior, kind=held[0],
+                                                  counter="closure_infrastructure_retries", retry=CLOSURE_RETRY,
+                                                  role="closure", fields={"receipts": exact})
             if held is not None and held[0] in REQUEST_REFUSALS:
                 return self._retry_closure(item, current, prior, held[0], exact)
             if held is not None:
@@ -620,6 +653,26 @@ class FactoryCoordinator:
                             f"The VERIFIER ended without a valid verdict {retries} times in a row (last: {kind}); "
                             "no engineering judgment was made on the candidate.")
         return _Advance(state, VERIFIER_RETRY, fields)
+
+    def _retry_producer(self, item: ReadyWorkItem, state: ExecutionState, prior: dict[str, object],
+                        kind: str) -> _Advance:
+        """A PRODUCER that could not start for infrastructure made no change and no engineering judgment: the stage
+        stays IMPLEMENT, no rejection is counted and no attempt is used."""
+        return self._retry_infrastructure(item, state=state, prior=prior, kind=kind, counter="producer_retries",
+                                          retry=PRODUCER_RETRY, role="producer", fields={})
+
+    def _retry_infrastructure(self, item: ReadyWorkItem, *, state: ExecutionState, prior: dict[str, object], kind: str,
+                              counter: str, retry: str, role: str, fields: dict[str, object]) -> _Advance:
+        """Infrastructure, never judgment (Founder decisions section 44): the stage stays, a later pass retries, at
+        most VERIFIER_RETRY_LIMIT times in a row; then INFRASTRUCTURE_HOLD, typed, never an authority block or a
+        Founder decision. This coordinator leaves a held item; the next one retries it with a fresh count."""
+        retries = int(prior.get(counter, 0) or 0) + 1
+        fields = fields | {counter: retries, f"{role}_failure": kind}
+        if retries > VERIFIER_RETRY_LIMIT:
+            self._infrastructure_held.add(item.identity)
+            return _Advance(state, INFRASTRUCTURE_HOLD, fields | {
+                counter: 0, "hold_reason": f"{role}-infrastructure-exhausted:{kind}"})
+        return _Advance(state, retry, fields)
 
     @staticmethod
     def _retry_closure(item: ReadyWorkItem, state: ExecutionState, prior: dict[str, object], refusal: str,
@@ -835,7 +888,8 @@ class FactoryCoordinator:
         """Turn an unreadable FD-05 effect into a scoped, durable authority block."""
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
         current = replace(self.decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
-        blocked = self._encode(current) | self._carried(raw) | {"correlation": reservation.owner, "outcome": "authority-block"}
+        blocked = self._encode(current) | self._carried(raw) | {"correlation": reservation.owner, "outcome": "authority-block"} \
+            | dict.fromkeys(INFRASTRUCTURE_COUNTERS.values(), 0)  # an authority block breaks any infrastructure row
         try:
             self._store.park_unknown_effect(self._profile, reservation.owner, version, blocked)
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)

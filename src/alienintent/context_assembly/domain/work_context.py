@@ -20,7 +20,7 @@ PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
 # the PRODUCER's transcript or self-review, and no package names a credential, key path or token.
 COMMON_FIELDS = ("identity", "label", "role", "attempt", "goal", "instructions", "contract", "release_record",
                  "starting_revision", "allowed_scope", "required_evidence", "stop_condition", "escalation_condition",
-                 "dependencies", "design_rules", "history", "resources", "context_command")
+                 "dependencies", "design_rules", "history", "resources", "context_command", "execution_baseline")
 FIELDS = {PRODUCER: frozenset({*COMMON_FIELDS, "assessment"}),
           VERIFIER: frozenset({*COMMON_FIELDS, "candidate", "diff", "producer_self_review"}),
           CLOSURE: frozenset({*COMMON_FIELDS, "candidate", "diff", "verdict", "closure_actions"})}
@@ -32,6 +32,11 @@ CLOSURE_REQUEST = {"identity": "<work item id>",
 SELF_REVIEW_LABEL = "input to check — not findings and not a verdict"
 SELF_REVIEW = "self-review"
 SELF_REVIEW_EXISTS = "SELF_REVIEW_EXISTS"
+# The execution baseline (WORK-PREPARATION-REFILL R2, Founder decisions section 43): the exact canonical main a PRODUCER
+# attempt was revalidated at and built on, recorded per attempt (`<identity>:<correlation>`) and then per candidate
+# (`<identity>:<candidate digest>`); the release baseline stays the authorization anchor.
+EXECUTION_BASELINE = "execution-baseline"
+EXECUTION_BASELINE_KEYS = frozenset({"release_baseline", "execution_baseline", "kind", "checks"})
 # The coordinator's source-revision locator: git:<remote>#<branch>@<revision>.
 SOURCE_REVISION = re.compile(r"git:.+#.+@([0-9a-f]{40})")
 
@@ -56,6 +61,11 @@ class ContextPackage:
 def self_review_aggregate(identity: str, candidate: CandidateRef) -> str:
     """The create-only store record of the self-review for this candidate (keyed by its content digest)."""
     return f"{SELF_REVIEW}:{identity}:{candidate.content_digest}"
+
+
+def execution_baseline_aggregate(identity: str, key: str) -> str:
+    """The create-only store record of an execution baseline: `key` is a PRODUCER correlation or a candidate digest."""
+    return f"{EXECUTION_BASELINE}:{identity}:{key}"
 
 
 def candidate_document(candidate: CandidateRef) -> dict[str, object]:
