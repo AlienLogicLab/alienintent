@@ -37,6 +37,8 @@ VERIFIER_RETRY, VERIFIER_RETRY_LIMIT = "verifier-retry", 2
 # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
 WIP_SCOPE = "wip"
 FINAL_OUTCOMES = frozenset({"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"})
+# Outcomes a later pass retries on the same stage; `run` pauses before that pass so a short outage is not spent at once.
+RETRY_OUTCOMES = frozenset({VERIFIER_RETRY, CLOSURE_RETRY, MISSING_TERMINAL_RESULT})
 # `launch` answers that launch nothing.
 CLOSURE_NOT_AUTOMATED, NOT_ELIGIBLE = "closure-not-automated", "not-eligible"
 # The one registry-wide `work launch` reservation (an ordinary store reservation). Only `work launch` takes and releases
@@ -67,6 +69,11 @@ class _WipSkip(StrEnum):
     UNAVAILABLE = "wip-limit-unavailable"
 
 
+class ProjectionRefused(Exception):
+    """The `completed` hook's permanent refusal of a DONE (one no retry can change): the DONE is settled, its WIP slot
+    released, with the refusal as its diagnostic. Any other exception from the hook is transient and keeps the slot."""
+
+
 class TerminalWork(ValueError):
     """A normal domain refusal to alter terminal or accepted work."""
 
@@ -77,6 +84,8 @@ class RunSummary:
     dispatched: tuple[str, ...]
     authority_blocked: tuple[str, ...] = ()
     failed: tuple[str, ...] = ()
+    # Every work item a role ran for, once per role run, in order.
+    ran: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -121,6 +130,7 @@ class FactoryCoordinator:
         if not self._recover(items):
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         dispatched: list[str] = []
+        ran: list[str] = []
         skipped: dict[str, _WipSkip] = {}
         # CLOSURE runs at most once per item in one call, and a VERIFIER retry waits for the next call: an outage is not
         # spent in one loop.
@@ -137,9 +147,11 @@ class FactoryCoordinator:
                 skipped[item.identity] = result
                 continue
             if result is StopReason.CAPACITY_UNAVAILABLE:
-                return RunSummary(result, tuple(dispatched))
-            if result is None and producing:
-                dispatched.append(item.identity)
+                return RunSummary(result, tuple(dispatched), ran=tuple(ran))
+            if result is None:
+                ran.append(item.identity)
+                if producing:
+                    dispatched.append(item.identity)
         stop_reason = self._stop_reason(items)
         if skipped:
             stop_reason = StopReason.WIP_LIMIT_UNAVAILABLE if _WipSkip.UNAVAILABLE in skipped.values() else StopReason.CAPACITY_UNAVAILABLE
@@ -147,7 +159,26 @@ class FactoryCoordinator:
             stop_reason, tuple(dispatched),
             tuple(item.identity for item in items if self._outcome(item.identity) == "authority-block"),
             tuple(item.identity for item in items if self._outcome(item.identity) in {"failure", "timeout"}),
+            tuple(ran),
         )
+
+    def run(self, pause: Callable[[], None] = lambda: None) -> RunSummary:
+        """BOUNDED-ROUTINE-LAUNCH: `start()` again and again until a pass runs no role, so every eligible work item is
+        taken through PRODUCER, VERIFIER and CLOSURE to DONE and the next one is admitted, with no launch per role. A
+        work item a pass could not admit (the WIP slot taken) is tried again by the next pass. The run ends because
+        every role run changes recorded state and every retry is bounded by its recorded count: attempts, VERIFIER
+        retries, CLOSURE retries and one replacement per lost phase. Before a pass that retries a work item `pause`
+        is called. Answers the last pass's summary (why the work stopped) with every pass's `dispatched` and `ran`."""
+        dispatched: list[str] = []
+        ran: list[str] = []
+        while True:
+            summary = self.start()
+            dispatched.extend(summary.dispatched)
+            ran.extend(summary.ran)
+            if not summary.ran:
+                return replace(summary, dispatched=tuple(dispatched), ran=tuple(ran))
+            if any(self._outcome(identity) in RETRY_OUTCOMES for identity in dict.fromkeys(summary.ran)):
+                pause()
 
     def release_and_start(self, identity: str) -> RunSummary:
         version, existing = self._store.read_state(self._profile, self._release_aggregate(identity))
@@ -165,8 +196,8 @@ class FactoryCoordinator:
         whose closure actions are not exactly the five fixed names answers
         CLOSURE_NOT_AUTOMATED; an item at `ready-to-land` while landing is not enabled answers READY_TO_LAND.
         Otherwise it writes the explicit human release as `release_and_start` does, runs the existing recovery once
-        (which may record already-durable outcomes of other launches and starts no worker), projects every recorded
-        DONE through `completed`, and, only if the item is in the READY snapshot (or, once started, resolved by
+        (which may record already-durable outcomes of other launches, projects a DONE still holding its WIP slot
+        through `completed` and starts no worker), and, only if the item is in the READY snapshot (or, once started, resolved by
         `started_item`) and `_eligible` admits it, runs `_run` once for it. It never calls `start()`, so no other
         work item runs and the next role waits for the next `launch`.
         """
@@ -189,7 +220,6 @@ class FactoryCoordinator:
         items = self._work.import_ready_snapshot()
         if not self._recover(items):
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
-        self._project_done()
         item = next((ready for ready in items if ready.identity == identity), started)
         if item is None or not self._eligible(item):
             return NOT_ELIGIBLE
@@ -640,13 +670,18 @@ class FactoryCoordinator:
     def _holds_wip(self, identity: str) -> bool:
         return bool(self._wip_reservations(identity))
 
-    def _release_ended_wip(self, identity: str) -> None:
-        """Release the work item's WIP slot once its recorded state reads back as DONE or a final outcome.
+    def _release_ended_wip(self, identity: str, *, projected: bool = False) -> None:
+        """Release the work item's WIP slot once its recorded state reads back as DONE or a final outcome. With a
+        `completed` hook a DONE is settled, and its slot released, only once `completed` succeeded (`projected`): until
+        then the slot is the durable record that the projection is still owed.
 
         Every other state (authority holds, reworks, retries, unknown effects) keeps the slot.
         """
         _, raw = self._store.read_state(self._profile, self._aggregate(identity))
-        if raw.get("stage") != LifecycleStage.DONE.value and raw.get("outcome") not in FINAL_OUTCOMES | {READY_TO_LAND}:
+        done = raw.get("stage") == LifecycleStage.DONE.value
+        if not done and raw.get("outcome") not in FINAL_OUTCOMES | {READY_TO_LAND}:
+            return
+        if done and self._completed is not None and not projected:
             return
         for reservation in self._wip_reservations(identity):
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
@@ -655,10 +690,14 @@ class FactoryCoordinator:
         by_identity = {item.identity: item for item in items}
         reservations = self._store.recovery_reservations(self._profile)
         # WIP slots first, from the recorded work item state alone (not the READY snapshot): a crash between the
-        # recorded DONE or final outcome and its release is completed here; every other slot is kept.
+        # recorded DONE or final outcome and its release is completed here, a DONE through `completed` first; every
+        # other slot is kept.
         for reservation in reservations:
             if reservation.scope == WIP_SCOPE:
-                self._release_ended_wip(reservation.key)
+                if self._is_done(reservation.key) and self._completed is not None:
+                    self._project(reservation.key)
+                else:
+                    self._release_ended_wip(reservation.key)
         for reservation in reservations:
             if reservation.scope == WIP_SCOPE or (reservation.scope, reservation.key) == (LAUNCH_SCOPE, LAUNCH_KEY):
                 continue
@@ -741,13 +780,16 @@ class FactoryCoordinator:
 
     def _with_started(self, items: tuple[ReadyWorkItem, ...]) -> tuple[ReadyWorkItem, ...]:
         """The READY snapshot plus every started work item it does not show (its card moved on with its state),
-        resolved from the registry: only recorded, non-final items at a stage some role advances."""
+        resolved from the registry: only recorded, non-final items at a stage some role advances. A started item is
+        found by its WIP slot, held from its first PRODUCER admission until it is settled, so this reads the open work
+        only, never the whole history."""
         if self._started_item is None:
             return items
         shown = {item.identity for item in items}
         started = []
-        for aggregate, _, raw in self._store.list_states(self._profile, "factory:"):
-            identity = aggregate.removeprefix("factory:")
+        for identity in dict.fromkeys(reservation.key for reservation in self._store.recovery_reservations(self._profile)
+                                      if reservation.scope == WIP_SCOPE):
+            _, raw = self._store.read_state(self._profile, self._aggregate(identity))
             if identity in shown or raw.get("stage") not in {str(stage) for stage in ROLE_BY_STAGE} \
                     or raw.get("outcome") in FINAL_OUTCOMES:
                 continue
@@ -757,27 +799,21 @@ class FactoryCoordinator:
         return (*items, *started)
 
     def _project(self, identity: str) -> None:
-        """The DONE projection hook; a refusal or error is a diagnostic, never raised into the coordinator."""
+        """The DONE projection hook, then the WIP slot released; a refusal or error is a diagnostic, never raised into
+        the coordinator. A permanent refusal (ProjectionRefused) still settles the DONE; on any other error the slot
+        stays held so the next recovery projects again."""
         if self._completed is None:
             return
         try:
             self._completed(identity)
-            self.projection_diagnostics.pop(identity, None)
+        except ProjectionRefused as refusal:
+            self.projection_diagnostics[identity] = f"{identity}: refused: {refusal}"
         except Exception as error:  # noqa: BLE001 - the row stays unchanged and the next launch retries
             self.projection_diagnostics[identity] = f"{identity}: {type(error).__name__}: {error}"
-
-    def _project_done(self) -> None:
-        """Every recorded DONE is projected again, whatever its board status, so any crash is repaired."""
-        if self._completed is None:
             return
-        try:
-            states = self._store.list_states(self._profile, "factory:")
-        except Exception as error:  # noqa: BLE001 - an unreadable store is a diagnostic; the launch continues
-            self.projection_diagnostics["*"] = f"list_states: {type(error).__name__}"
-            return
-        for aggregate, _, raw in states:
-            if raw.get("stage") == LifecycleStage.DONE.value:
-                self._project(aggregate.removeprefix("factory:"))
+        else:
+            self.projection_diagnostics.pop(identity, None)
+        self._release_ended_wip(identity, projected=True)
 
     def _restore_authority_block(self, item: ReadyWorkItem, state: ExecutionState, outcome: WorkerOutcome, correlation: str, items: Iterable[ReadyWorkItem], role: str = PRODUCER, hold: str | None = None) -> None:
         self._register_escalation(outcome.escalation or self._authority_request(

@@ -173,8 +173,8 @@ class CrashAfterVerifierOutcome:
             os._exit(CRASH_EXIT)
         return entry
 
-    def records(self):
-        return self._inner.records()
+    def records(self, work=None, correlation=None):
+        return self._inner.records(work, correlation)
 
 
 def main() -> int:

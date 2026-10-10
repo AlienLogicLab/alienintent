@@ -251,6 +251,8 @@ class WorkLaunches(Protocol):
 
     def launch(self, identity: str) -> Any: ...
 
+    def run(self, pause: Callable[[], None]) -> Any: ...
+
 
 def launch_work(coordinator: WorkLaunches, identity: str) -> dict[str, object]:
     """`work launch`: one role step (PRODUCER at IMPLEMENT or VERIFIER at VERIFY) for exactly the named work item,
@@ -279,9 +281,50 @@ def exclusive_launch_work(launcher: Callable[[], WorkLaunches], identity: str, s
     `acquire`, scope `launch`, key `registry`, owner `launcher:<this process as canonical JSON>`), released with its
     owner and fence afterwards. A held reservation is taken over only when its owner has `terminated`; while it is
     `alive` or `unknown`, or when another process took it over first, the answer is LAUNCH_IN_PROGRESS."""
+    return _exclusively(store, ownership, profile, {"identity": identity}, lambda: launch_work(launcher(), identity))
+
+
+# `work run`: the pause before a pass that retries a work item, and the wait after an idle run with `--wait`.
+RETRY_PAUSE_SECONDS = 120
+
+
+def exclusive_run_work(launcher: Callable[[], WorkLaunches], store: Any, ownership: LaunchOwnership,
+                       profile: str = "registry", pause: Callable[[], None] = lambda: None) -> dict[str, object]:
+    """`work run` (BOUNDED-ROUTINE-LAUNCH): the coordinator's `run(pause)` inside the same exclusive reservation as
+    `work launch`, so a run and a launch never overlap; its summary, with any DONE still owed its projection."""
+    def run() -> dict[str, object]:
+        coordinator = launcher()
+        summary = asdict(coordinator.run(pause))
+        diagnostics = dict(getattr(coordinator, "projection_diagnostics", {}) or {})
+        return summary | ({"projection_diagnostics": diagnostics} if diagnostics else {})
+    return _exclusively(store, ownership, profile, {}, run)
+
+
+def watch_work(launcher: Callable[[], WorkLaunches], store: Any, ownership: LaunchOwnership, wait: float,
+               report: Callable[[dict[str, object]], None], sleep: Callable[[float], None],
+               profile: str = "registry") -> None:
+    """`work run --wait`: `exclusive_run_work` again and again, never returning (the service stops it). After a run
+    that ran no role (idle, held, or another launch in progress) it waits `wait` seconds; before a pass that retries
+    a work item it pauses RETRY_PAUSE_SECONDS. A run that raises (the board unreadable, a store or git error) is
+    reported as `error` and waited out like an idle run: one transient failure never ends the service. Every run that
+    ran a role or answered something is reported."""
+    while True:
+        try:
+            value = exclusive_run_work(launcher, store, ownership, profile, lambda: sleep(RETRY_PAUSE_SECONDS))
+        except Exception as error:  # noqa: BLE001 - the reservation is released; the next run recovers
+            value = {"error": type(error).__name__, "detail": str(error)}
+        if value.get("ran") or "answer" in value or "error" in value or "projection_diagnostics" in value:
+            report(value)
+        if not value.get("ran"):
+            sleep(wait)
+
+
+def _exclusively(store: Any, ownership: LaunchOwnership, profile: str, answered: Mapping[str, object],
+                 action: Callable[[], dict[str, object]]) -> dict[str, object]:
+    """`action` inside the one exclusive registry-wide launch reservation, or `answered` with the reason it is not."""
     current = ownership.current()
     if current is None:
-        return {"identity": identity, "answer": LAUNCH_OWNER_UNAVAILABLE}
+        return {**answered, "answer": LAUNCH_OWNER_UNAVAILABLE}
     owner = "launcher:" + json.dumps(dict(current), sort_keys=True, separators=(",", ":"))
     try:
         reservation = store.acquire(profile, LAUNCH_SCOPE, LAUNCH_KEY, owner)
@@ -296,14 +339,14 @@ def exclusive_launch_work(launcher: Callable[[], WorkLaunches], identity: str, s
                 recorded = None
             state = ownership.owner_state(recorded) if isinstance(recorded, dict) else "unknown"
         if held is None or state != "terminated":
-            return {"identity": identity, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
+            return {**answered, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
         try:
             store.release(profile, held.scope, held.key, held.owner, held.fence)  # StaleFence: taken over first
             reservation = store.acquire(profile, LAUNCH_SCOPE, LAUNCH_KEY, owner)
         except ReservationRejected:
-            return {"identity": identity, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
+            return {**answered, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
     try:
-        return launch_work(launcher(), identity)
+        return action()
     finally:
         store.release(profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
 
