@@ -40,13 +40,13 @@ SRC = Path(__file__).resolve().parents[2] / "src" / "alienintent"
 PROTECTED = ("docs/decisions/", "src/protected.py")
 
 
-def plan_at(digest: str) -> PlanAuthority:
-    """A current plan authority with PROTECTED and one obligation FIXTURE over `src/` (TEST DATA)."""
+def plan_at(digest: str, label: str = "FIXTURE") -> PlanAuthority:
+    """A live plan authority with PROTECTED and one obligation `label` over `src/` (TEST DATA)."""
     scope = {"target_repositories": ["AlienLogicLab/alienintent"], "capabilities": ["python"],
              "budget_caps": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600, "cancellation_limit": 1,
                              "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
              "protected_paths": list(PROTECTED),
-             "obligations": [{"label": "FIXTURE", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+             "obligations": [{"label": label, "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
                               "allowed_paths": ["src/"]}]}
     text = f"```json alienintent-plan-authority\n{json.dumps(scope)}\n```\n"
     return PlanAuthority(PLAN_PATH, "c" * 40, digest, "sha256:" + "b" * 64, "Founder", "approved", parse_scope(text))
@@ -277,21 +277,31 @@ def test_closure_refuses_an_automatic_on_candidate_outside_its_boundary_before_a
 
 
 def test_closure_refuses_a_candidate_outside_the_current_plan_authority_and_raises_one_owner_decision(tmp_path):
-    """Released under D1, D2 is current at CLOSURE: the contract is checked against the current authority at the
-    landing gate, held before any order, with an owner-decision reason and the owner-decision attention item."""
+    """Released under D1, the tip is D2 at CLOSURE and no longer grants obligation FIXTURE: the contract is checked
+    against the live authority at the landing gate, held before any order, with an owner-decision reason and the
+    owner-decision attention item."""
     landed, decisions = [], []
-    revision, findings, orders, head = close(tmp_path, "src/a.py", "automatic-on", current=plan_at(D2),
+    revision, findings, orders, head = close(tmp_path, "src/a.py", "automatic-on", current=plan_at(D2, "OTHER"),
                                              authority=SimpleNamespace(land=landed.append), decisions=decisions)
     assert findings[0] == hold("scope-violation", head, revision) and (orders, landed) == ([], [])
-    assert any(finding.startswith("owner-decision-required: authority_issuer") for finding in findings[1:])
+    assert any(finding.startswith("owner-decision-required: authority_references: obligation FIXTURE")
+               for finding in findings[1:])
     assert decisions == ["work"]
 
 
+def test_closure_lands_a_candidate_released_under_an_older_plan_revision_still_inside_the_tip(tmp_path):
+    """PLAN-TIP-AUTHORITY-RUNTIME-FIX: released under D1, the tip is D2 and still grants obligation FIXTURE: the
+    candidate is revalidated against the tip and reaches its landing."""
+    _, findings, _, _ = close(tmp_path, "src/a.py", "automatic-on", current=plan_at(D2))
+    assert [finding.split(":", 1)[0] for finding in findings] == ["ready-to-land"]
+
+
 def test_a_journaled_order_is_not_re_landed_after_its_plan_authority_is_replaced(tmp_path):
-    """The order was journaled and handed over under D1 (the push did not land); D2 is current when the order is
-    re-landed at the same base: held, the Landing Authority is not called again."""
+    """The order was journaled and handed over under D1 (the push did not land); the tip is D2, which no longer
+    grants obligation FIXTURE, when the order is re-landed at the same base: held, the Landing Authority is not called
+    again."""
     landed = []
-    revision, findings, orders, head = close(tmp_path, "src/a.py", "automatic-on", reconcile_under=plan_at(D2),
+    revision, findings, orders, head = close(tmp_path, "src/a.py", "automatic-on", reconcile_under=plan_at(D2, "OTHER"),
                                              authority=SimpleNamespace(land=landed.append))
     assert len(orders) == 1 and len(landed) == 1
     assert findings[0] == hold("scope-violation", head, revision)

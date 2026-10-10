@@ -863,14 +863,16 @@ def test_check6_an_explicit_item_with_a_ready_card_and_no_release_record_is_neve
     assert [i for i in registry._attention.list_pending() if i.origin.work_ref in (item.id, item.card_id)] == []
 
 
-def test_a_new_plan_approval_stops_an_item_released_under_the_old_one(plan_board, tmp_path):
-    """Released under plan D1, then the Founder approves D2: the item's issuer no longer names the current authority,
-    so it is not released by policy and neither `start()` nor `launch()` dispatches it."""
+def test_a_plan_tip_that_drops_the_obligation_stops_an_item_released_under_the_old_one(plan_board, tmp_path):
+    """Released under plan D1, then main's tip moves to D2, which no longer grants obligation FIXTURE (no approval
+    step: the tip is the live authority): the item is no longer inside the live plan, so it is not released by policy
+    and neither `start()` nor `launch()` dispatches it."""
     from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
     from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
     item = plan_board.derived("PD-OLD", plan_board.approve())
     assert plan_board.registry.release.release(item.id).answer is None
-    plan_board.approve(plan_text(note=" revision 2"))
+    commit_file(plan_board.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
+        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
     host = tmp_path / "factory-director-host.json"
     host.write_text(json.dumps({"wipLimit": 1}))
     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")

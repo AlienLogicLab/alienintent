@@ -1,10 +1,15 @@
-"""Plan authority: the scope an approved canonical-plan revision grants to the Work Items derived from it. Pure.
+"""Plan authority: the scope the live canonical plan grants to the Work Items derived from it. Pure.
+
+Founder 2026-10-10 (PLAN-TIP-AUTHORITY-RUNTIME-FIX): the canonical plan at the tip of canonical main is the live
+authority root. A derived contract's `authority_issuer` names the plan revision it was prepared from (provenance and
+stale-work detection); it inherits when it is inside the live plan's scope, so an item prepared from an older revision
+is revalidated against the live one by the same rules, never by its recorded digest.
 
 The canonical plan holds exactly one block fenced as ```json alienintent-plan-authority: the target repositories,
 capabilities and budget caps derived work may use, the protected paths no derived work may touch, and the obligations,
 each with its priority, the requirement ids it satisfies and the paths it may change. The block is part of the plan's
 bytes, so the approved content digest covers every limit. A plan-derived contract has `release_policy` automatic-on,
-`authority_issuer` `plan-authority:<content digest>` and exactly one `authority_references` entry
+`authority_issuer` `plan-authority:sha256:<64 hex>` and exactly one `authority_references` entry
 `<plan path> obligation:<LABEL>`; `outside_authority` answers one `owner-decision-required:` reason per rule it fails.
 Paths are compared normalized: relative POSIX, no `.`/`..`/empty part, no leading `/`, no `\\`, no glob character,
 any trailing `/` removed; scope paths in their exact case, both sides of a comparison with a protected path
@@ -14,11 +19,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import re
 
 from alienintent.execution_coordination.domain.contract import BiuContract
 
 PLAN_PATH = "docs/decisions/alienintent-v2-canonical-project-plan.md"
 ISSUER_PREFIX = "plan-authority:"
+ISSUER = re.compile(r"plan-authority:sha256:[0-9a-f]{64}")
 OPEN, CLOSE = "```json alienintent-plan-authority", "```"
 OBLIGATION = "obligation:"
 OWNER_DECISION = "owner-decision-required: "
@@ -69,8 +76,8 @@ class PlanScope:
 
 @dataclass(frozen=True)
 class PlanAuthority:
-    """One approved plan revision: `content_digest` is `sha256:` of the plan file's bytes at `commit`; `record_ref`
-    the approval's evidence reference (its revision digest)."""
+    """One plan revision as authority: `content_digest` is `sha256:` of the plan file's bytes at `commit`; `record_ref`
+    a reference to it (the live authority: `git:<commit>:<plan path>`; a recorded approval: its evidence digest)."""
     plan_path: str
     commit: str
     content_digest: str
@@ -162,10 +169,11 @@ def obligation_labels(contract: BiuContract) -> tuple[str, ...]:
 
 def outside_authority(contract: BiuContract, authority: PlanAuthority) -> tuple[str, ...]:
     """One `owner-decision-required:` reason per failing rule, in rule order; empty when the contract inherits the
-    authority, its priority then the obligation's."""
+    live authority, its priority then the obligation's. The issuer must name a plan revision by its digest; which
+    revision it names is provenance, so an item prepared from an older revision is revalidated by every other rule."""
     scope, reasons = authority.scope, []
-    if contract.authority_issuer != ISSUER_PREFIX + authority.content_digest:
-        reasons.append(f"authority_issuer: not the approved plan authority {ISSUER_PREFIX}{authority.content_digest}")
+    if ISSUER.fullmatch(contract.authority_issuer or "") is None:
+        reasons.append(f"authority_issuer: not a plan authority digest ({ISSUER_PREFIX}sha256:<64 hex>)")
     labels = obligation_labels(contract)
     obligation = scope.obligation(labels[0]) if len(labels) == 1 else None
     if len(labels) != 1:
@@ -201,7 +209,8 @@ def outside_authority(contract: BiuContract, authority: PlanAuthority) -> tuple[
                    for entry, path in entries if path is None or not any(under(path, a) for a in allowed)]
         if refused:
             reasons.append(f"authorized_scope: {'; '.join(refused)}")
-    protected = [normalized(path, fold=True) for path in scope.protected_paths]
+    # The plan itself is always protected: an item that changed it would widen every later item's authority.
+    protected = [normalized(path, fold=True) for path in (*scope.protected_paths, PLAN_PATH)]
     crossing = [entry for entry, path in entries if path is not None
                 and any(under(path.casefold(), p) or under(p, path.casefold()) for p in protected)]
     if crossing:
