@@ -1,7 +1,7 @@
 # Work unit: plan obligations state their work (WORK-PREPARATION-REFILL R1)
 
-**Label:** `WORK-PREPARATION-REFILL-R1` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 1, 2026-10-10. Not registered.
+**Label:** `WORK-PREPARATION-REFILL-R1` (a document label; permanent id `34946dbe-d140-4688-9041-edebb3760b6f`).
+**Status:** Revision 1, 2026-10-10. Registered 34946dbe-d140-4688-9041-edebb3760b6f.
 **Authority:** Founder authorization 2026-10-10 (decisions section 38), quoted in `fixed_decisions`; it changes the
 protected canonical plan and plan-authority machinery, so it is not plan-derived and is released by `work authorize`
 with those words. Its one `work launch` is a bootstrap artifact of the pre-REFILL runtime (decisions section 39).
@@ -12,7 +12,7 @@ with those words. Its one `work launch` is a bootstrap artifact of the pre-REFIL
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "34946dbe-d140-4688-9041-edebb3760b6f",
  "version": "revision-1",
  "intent": "The canonical plan's obligations carry intent, acceptance ids, depends_on and an explicit satisfied_by mapping to landed work; the plan-authority parser validates them (acceptance ids distinct across the block, dependencies known and acyclic, mappings to own ids with a full landed commit and evidence, priority exactly the scheduler's P0-P5); the plan text is the Founder-approved text, including the new obligation EVENT-TRIGGERED-CONTINUATION; and a pure Work Preparation function answers each obligation's state and the next eligible obligation by numeric priority then plan order.",
  "satisfied_requirement_ids": [
