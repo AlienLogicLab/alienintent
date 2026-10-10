@@ -1,7 +1,7 @@
 # Work unit: current-main execution baseline (WORK-PREPARATION-REFILL R2)
 
-**Label:** `WORK-PREPARATION-REFILL-R2` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 1, 2026-10-11. Not registered.
+**Label:** `WORK-PREPARATION-REFILL-R2` (a document label; permanent id `e9d6d1fc-7ad5-4025-8a24-00ab12768e3e`).
+**Status:** Revision 1, 2026-10-11. Registered as work item e9d6d1fc-7ad5-4025-8a24-00ab12768e3e.
 **Authority:** obligation WORK-PREPARATION-REFILL of the live canonical plan (tip `58b3742`, `sha256:3be660b28ca00d450a0baa195161e9dcfe33ed63b2cbd13da9ca712c556f2324`),
 acceptance WPR-A1, plus the Founder's explicit authorization of the canonical-main infrastructure-failure changes in
 `execution_coordination/` and `inherited_release.py` (decisions sections 44-45, quoted in `fixed_decisions`). It is
@@ -14,7 +14,7 @@ therefore an explicit exception, not plan-derived: released by `work authorize` 
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "e9d6d1fc-7ad5-4025-8a24-00ab12768e3e",
  "version": "revision-1",
  "intent": "WPR-A1: every new PRODUCER attempt starts from current canonical main (the default branch fetched from the remote) only after deterministic baseline revalidation at one fetched SHA; work that cannot be revalidated is held baseline-revalidation-required for Work Preparation and Agent Ready, never silently retargeted; the revalidated execution baseline is recorded per attempt and per candidate and is the VERIFIER's, regression gate's and mutation control run's baseline, while the release baseline stays the provenance anchor.",
  "satisfied_requirement_ids": [
