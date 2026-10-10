@@ -1,8 +1,8 @@
 # Work unit: bounded routine launch (R3)
 
-**Label:** `BOUNDED-ROUTINE-LAUNCH-R3` (a document label; permanent id `PENDING-REGISTRATION`; parent `034b92ca`,
+**Label:** `BOUNDED-ROUTINE-LAUNCH-R3` (a document label; permanent id `236f54bf-071f-48d8-b735-97c39a2e570b`; parent `034b92ca`,
 R2, cancelled as a packet defect: its VERIFIER's regression gate found three regressions outside its targeted set).
-**Status:** Revision 6, 2026-10-10. Not registered.
+**Status:** Revision 6, 2026-10-10. Registered (CAPTURE).
 **Authority:** derived from the approved canonical plan revision `28df5c3` (`sha256:415231dcd846671f40bbf24fd6429515592d2d920d4d159d599c9aed9a468dff`), obligation
 `BOUNDED-ROUTINE-LAUNCH` (P0); released by the control plane (`work release`), no per-item Founder release.
 **Starting revision:** main `8440338`.
@@ -12,7 +12,7 @@ R2, cancelled as a packet defect: its VERIFIER's regression gate found three reg
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "236f54bf-071f-48d8-b735-97c39a2e570b",
  "version": "revision-6",
  "intent": "One `work run` starts the factory and keeps advancing READY work through PRODUCER, VERIFIER and CLOSURE to DONE and the next eligible item with no launch per role, reusing the existing `FactoryCoordinator.start()` loop under the existing exclusive launch reservation; retries resume without a human (`--wait` service mode); a crash resumes from durable reservations; routine operation reads open work and one work item's journal records only, never the whole history.",
  "satisfied_requirement_ids": [
