@@ -1,7 +1,7 @@
 # Work unit: plan tip is the live authority (runtime fix), revision 2
 
-**Label:** `PLAN-TIP-AUTHORITY-RUNTIME-FIX-R2` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 2, 2026-10-10. Not registered. Re-issue of c2c5b816 (parent).
+**Label:** `PLAN-TIP-AUTHORITY-RUNTIME-FIX-R2` (a document label; permanent id `26b4c673-8537-49f0-a330-5a3b05c4f354`).
+**Status:** Revision 2, 2026-10-10. Registered 26b4c673-8537-49f0-a330-5a3b05c4f354. Re-issue of c2c5b816 (parent).
 **Authority:** Founder authorization 2026-10-10 (decisions section 31), quoted in `fixed_decisions`; it changes protected
 plan-authority/release machinery, so it is not plan-derived and is released by `work authorize` with those words.
 **Starting revision:** main `83eb7b7`.
@@ -11,7 +11,7 @@ plan-authority/release machinery, so it is not plan-derived and is released by `
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "26b4c673-8537-49f0-a330-5a3b05c4f354",
  "version": "revision-2",
  "intent": "Make the runtime enforce the approved plan: the canonical plan at the tip of canonical main is the live plan authority, read at every decision with its exact commit and digest; no approve-plan snapshot is needed to activate a revision; a derived Work Item records the plan revision it was prepared from and the tip it was released under, and an item prepared from an older revision is revalidated against the tip by the same scope rules before inherited release and again at CLOSURE.",
  "satisfied_requirement_ids": [
