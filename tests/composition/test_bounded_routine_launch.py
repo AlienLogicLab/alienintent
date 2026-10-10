@@ -13,6 +13,7 @@ import json
 import pytest
 
 from alienintent.composition import work_registry
+from alienintent.context_assembly.domain.work_identity import GitReadFailed
 from alienintent.control_plane.application.operator import LAUNCH_IN_PROGRESS, exclusive_run_work
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator, LAUNCH_KEY, LAUNCH_SCOPE
@@ -38,15 +39,20 @@ def closing(tmp_path, monkeypatch) -> Closing:
     return Closing(fx, monkeypatch)
 
 
-def planned(closing: Closing, *labels: str):
-    """Plan-derived items under one approved fixture plan, READY in the order given; main pushed as the landing base."""
+def planned(closing: Closing, *labels: str, scopes: dict[str, str] | None = None):
+    """Plan-derived items under one approved fixture plan, READY in the order given, each scoped to its `scopes` file
+    (by default launch-candidate.txt for the first, `src/<label>-candidate.txt` for the others, so later landings never
+    touch them) and declaring its targeted proof file; main pushed as the landing base."""
     fx = closing.fx
+    fx.proof = ["tests/test_launch_proof.py"]
     digest = fx.registry.plan_approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text()),
                                                PLAN_QUOTE).content_digest
     items = [fx.authorized(label, False, **FIXED, release_policy="automatic-on",
                            authority_issuer="plan-authority:" + digest,
                            authority_references=["README.md", f"{PLAN_PATH} obligation:FIXTURE"],
-                           authorized_scope=["launch-candidate.txt"]) for label in labels]
+                           authorized_scope=[(scopes or {}).get(label, "launch-candidate.txt" if index == 0
+                                                                else f"src/{label.lower()}-candidate.txt")])
+             for index, label in enumerate(labels)]
     for item in items:  # every release baseline is the same main, after every packet
         [entry] = [a for a in fx.registry.assessment.consumer.history(item.id)
                    if a["raw_ref"] == asdict(item.assessment_ref)]
@@ -76,8 +82,8 @@ def row_done(closing: Closing, identity: str) -> bool:
 def test_one_run_takes_the_first_item_to_done_then_runs_the_next_with_no_launch_per_role(closing):
     """The first VERIFIER ends without a verdict, so the run pauses and retries it on the next pass; meanwhile the
     second item cannot take the one WIP slot. The first lands; the run then admits the second and runs each of its
-    roles. (Its CLOSURE answers base-moved: a PRODUCER starts from its release baseline, which the first landing moved
-    on; that is WORK-PREPARATION-REFILL's to change, so only that the second item's roles ran is checked here.)"""
+    roles. The first landing moved main past the second's release baseline; its scope is disjoint, so its PRODUCER is
+    revalidated onto the new main (WORK-PREPARATION-REFILL R2) and it lands too."""
     first, second = planned(closing, "FIRST", "SECOND")
     verifier_plan(closing, ["exit"])
     base, pauses = closing.head(), []
@@ -92,6 +98,249 @@ def test_one_run_takes_the_first_item_to_done_then_runs_the_next_with_no_launch_
     assert summary["stop_reason"] == "eligible-backlog-exhausted" and "projection_diagnostics" not in summary
     assert not closing.fx.wip_held(first.id) and not closing.fx.wip_held(second.id)
     assert first.id in git(closing.remote, "log", "--format=%s", f"{base}..main").decode()
+    assert closing.state(second.id).stage is DONE and row_done(closing, second.id)
+    assert second.id in git(closing.remote, "log", "--format=%s", f"{base}..main").decode()
+
+
+def test_a_retargeted_candidate_is_built_and_verified_on_its_execution_baseline_and_keeps_its_release_baseline(
+        closing):
+    """WORK-PREPARATION-REFILL R2 (Founder decisions section 43): after FIRST lands, SECOND (disjoint scope, declared
+    proof) is revalidated onto the new main. Its candidate's parent, its VERIFIER's starting revision and diff base and
+    the regression gate's baseline are that recorded execution revision; its release baseline is unchanged."""
+    first, second = planned(closing, "FIRST", "SECOND")
+    release = closing.fx.loaded().context.releases.release_authorization(second.id).baseline
+
+    work_run(closing)
+
+    assert closing.state(second.id).stage is DONE
+    producer, verifier = [run for run in closing.fx.runs() if run["package"]["identity"] == second.id][:2]
+    execution = producer["package"]["execution_baseline"]
+    assert (execution["release_baseline"], execution["kind"]) == (release, "retarget")
+    moved = execution["execution_baseline"]
+    assert moved != release and producer["package"]["starting_revision"] == moved
+    assert git(closing.remote, "rev-parse", f"{verifier['head']}^").decode().strip() == moved
+    assert verifier["package"]["starting_revision"] == verifier["package"]["diff"]["base"] == moved
+    assert verifier["package"]["execution_baseline"] == execution
+    assert verifier["package"]["release_record"]["baseline"] == release
+    assert (launch_root(closing.fx.loaded().configuration) / "regression-baselines" / f"{moved}.json").exists()
+
+
+def test_an_item_whose_scope_main_changed_is_held_for_re_preparation_not_retargeted(closing):
+    """FIRST lands a change to the one file SECOND is scoped to: SECOND's PRODUCER is never started on the new main;
+    it is held `baseline-revalidation-required` and nothing is published for it."""
+    first, second = planned(closing, "FIRST", "SECOND", scopes={"SECOND": "launch-candidate.txt"})
+
+    summary = work_run(closing)
+
+    assert closing.state(first.id).stage is DONE
+    assert [run["package"]["identity"] for run in closing.fx.runs("PRODUCER")] == [first.id]
+    assert second.id in summary["authority_blocked"]
+    assert closing.state(second.id).outcome == "authority-block"
+    assert "baseline-revalidation-required: scope-proof-references-untouched: launch-candidate.txt" in json.dumps(
+        closing.fx.store.read_state("registry", "decision-inbox")[1]["open"][second.id])
+    assert second.id not in git(closing.remote, "for-each-ref", "--format=%(refname)", "refs/heads/").decode()
+
+
+def _flaky_revalidation(monkeypatch, failures: int | None) -> list[str]:
+    """Baseline revalidation that cannot fetch canonical main for its first `failures` calls (None: every call)."""
+    calls: list[str] = []
+    real = work_registry.WorkRegistry._revalidate
+
+    def flaky(self, identity):
+        calls.append(identity)
+        return None if failures is None or len(calls) <= failures else real(self, identity)
+    monkeypatch.setattr(work_registry.WorkRegistry, "_revalidate", flaky)
+    return calls
+
+
+def test_a_producer_that_cannot_fetch_canonical_main_is_retried_and_lands_with_no_founder_decision(
+        closing, monkeypatch):
+    """WORK-PREPARATION-REFILL R2 (Founder decisions section 44): canonical main cannot be fetched at the first
+    PRODUCER revalidation. The same work item gets no Founder decision and uses no attempt; the run retries it after
+    its pause and, canonical main reachable again, takes it to DONE."""
+    [item] = planned(closing, "ONLY")
+    calls = _flaky_revalidation(monkeypatch, 1)
+    pauses = []
+
+    summary = work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
+
+    assert pauses == ["producer-retry"] and calls == [item.id, item.id]
+    assert closing.state(item.id).stage is DONE and summary["authority_blocked"] == ()
+    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
+    assert closing.state(item.id).record.get("rejections", 0) == 0
+
+
+def test_canonical_main_unreachable_past_the_retries_holds_as_infrastructure_and_the_next_run_lands_it(
+        closing, monkeypatch):
+    """Past the bounded retries: a typed infrastructure hold, no Decision Inbox item, no authority block; the next
+    `work run`, canonical main reachable, takes the same work item to DONE."""
+    [item] = planned(closing, "ONLY")
+    real = work_registry.WorkRegistry._revalidate
+    _flaky_revalidation(monkeypatch, None)
+
+    summary = work_run(closing)
+
+    state = closing.state(item.id)
+    assert (state.outcome, state.record["hold_reason"]) == (
+        "infrastructure-hold", "producer-infrastructure-exhausted:canonical-main-unavailable")
+    assert summary["authority_blocked"] == () and roles(closing) == []
+    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
+    monkeypatch.setattr(work_registry.WorkRegistry, "_revalidate", real)  # canonical main reachable again
+    work_run(closing)
+    assert closing.state(item.id).stage is DONE
+
+
+def test_a_closure_that_cannot_fetch_canonical_main_is_retried_and_lands_with_no_founder_decision(
+        closing, monkeypatch):
+    """CLOSURE cannot fetch the landing remote, then cannot fetch the live plan authority (WORK-PREPARATION-REFILL R2,
+    Founder decisions section 44): each is typed infrastructure on the same accepted candidate, retried after a pause
+    with no Founder decision; once canonical main is reachable it lands, still under the live authority."""
+    [item] = planned(closing, "ONLY")
+    fetch, canonical = work_registry.RegistryClosure._fetch, work_registry.WorkRegistry._fetch
+    gate = work_registry.RegistryClosure._scope_violations
+    failures, inside = {"landing": 1, "authority": 1}, []
+
+    def landing_fetch(self, clone, candidate):
+        if failures["landing"]:
+            failures["landing"] -= 1
+            return None
+        return fetch(self, clone, candidate)
+
+    def live_main(self, repository):
+        if inside and inside[-1]:  # the landing gate's fetch of the live authority, in one outage
+            raise GitReadFailed("git fetch", repository, "network unreachable")
+        return canonical(self, repository)
+
+    def landing_gate(self, *args):
+        inside.append(bool(failures["authority"]))
+        try:
+            return gate(self, *args)
+        finally:
+            if inside.pop():
+                failures["authority"] -= 1
+    monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", landing_fetch)
+    monkeypatch.setattr(work_registry.RegistryClosure, "_scope_violations", landing_gate)
+    monkeypatch.setattr(work_registry.WorkRegistry, "_fetch", live_main)
+    pauses = []
+
+    summary = work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
+
+    assert pauses == ["closure-retry", "closure-retry"] and failures == {"landing": 0, "authority": 0}
+    assert closing.state(item.id).stage is DONE and summary["authority_blocked"] == ()
+    assert closing.state(item.id).record["closure_infrastructure_retries"] == 0  # "in a row": reset by the landing
+    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
+
+
+def test_a_candidate_fetch_failure_at_closure_is_retried_never_reworked(closing, monkeypatch):
+    """CLOSURE fetches main, but the remote cannot be reached for the candidate branch (its fetch and the remote's
+    answer both fail): infrastructure (`remote-unreadable`), retried on the same accepted candidate; never a rework, so
+    no rejection and no attempt is used."""
+    [item] = planned(closing, "ONLY")
+    git_call, failing = work_registry.RegistryClosure._git, {"candidate-fetch": 1, "ls-remote": 1}
+
+    def flaky(clone, *args, check=False):
+        kind = "ls-remote" if "ls-remote" in args else \
+            "candidate-fetch" if any("refs/remotes/landing/candidate" in arg for arg in args) else None
+        if kind and failing[kind]:
+            failing[kind] -= 1
+            return False if check else ""
+        return git_call(clone, *args, check=check)
+    monkeypatch.setattr(work_registry.RegistryClosure, "_git", staticmethod(flaky))
+    pauses = []
+
+    work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
+
+    assert failing == {"candidate-fetch": 0, "ls-remote": 0}
+    assert pauses == ["closure-retry"] and closing.state(item.id).stage is DONE
+    assert closing.state(item.id).record.get("rejections", 0) == 0
+
+
+def test_a_candidate_the_remote_still_advertises_but_that_did_not_arrive_is_retried(closing, monkeypatch):
+    """The candidate fetch fails part way but the remote still advertises the branch at exactly the candidate:
+    infrastructure, retried; never a rework."""
+    [item] = planned(closing, "ONLY")
+    git_call, failing = work_registry.RegistryClosure._git, [1]
+
+    def partial(clone, *args, check=False):
+        if failing and any("refs/remotes/landing/candidate" in arg for arg in args):
+            failing.pop()
+            return False if check else ""
+        return git_call(clone, *args, check=check)
+    monkeypatch.setattr(work_registry.RegistryClosure, "_git", staticmethod(partial))
+    pauses = []
+
+    work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
+
+    assert not failing and pauses == ["closure-retry"] and closing.state(item.id).stage is DONE
+    assert closing.state(item.id).record.get("rejections", 0) == 0
+
+
+def test_one_remote_answer_decides_an_absent_candidate(closing, monkeypatch):
+    """The candidate fetch fails and the remote then answers exactly one question before it drops: that one answer
+    (the branch still at the candidate) decides; a second question, going unanswered, could otherwise read as
+    "answered without the candidate" and turn a transient failure into a rework."""
+    [item] = planned(closing, "ONLY")
+    git_call, calls = work_registry.RegistryClosure._git, []
+
+    def fetch_fails_then_remote_drops(clone, *args, check=False):
+        if any("refs/remotes/landing/candidate" in arg for arg in args) and not calls:
+            calls.append("fetch")
+            return False if check else ""
+        if "ls-remote" in args and calls and calls[0] == "fetch" and len(calls) < 3:
+            calls.append("ls-remote")
+            if len(calls) == 3:  # the second question in this CLOSURE: the remote has dropped
+                return False if check else ""
+        return git_call(clone, *args, check=check)
+    monkeypatch.setattr(work_registry.RegistryClosure, "_git", staticmethod(fetch_fails_then_remote_drops))
+    pauses = []
+
+    work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
+
+    assert calls[:2] == ["fetch", "ls-remote"] and pauses == ["closure-retry"]
+    assert closing.state(item.id).stage is DONE and closing.state(item.id).record.get("rejections", 0) == 0
+
+
+def test_a_candidate_branch_the_remote_no_longer_has_is_judged_never_retried_as_infrastructure(closing, monkeypatch):
+    """The remote answers but no longer has the candidate branch: not infrastructure, so no `remote-unreadable` loop;
+    CLOSURE reworks as before (this contract allows one attempt, so the rework ends it as a judged failure)."""
+    [item] = planned(closing, "ONLY")
+    fetch, deleted = work_registry.RegistryClosure._fetch, []
+
+    def branch_gone(self, clone, candidate):
+        if not deleted:
+            reference = candidate.locator.rpartition("#")[2].rpartition("@")[0]
+            git(closing.remote, "update-ref", "-d", f"refs/heads/{reference}")
+            deleted.append(reference)
+        return fetch(self, clone, candidate)
+    monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", branch_gone)
+    pauses = []
+
+    work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
+
+    state = closing.state(item.id)
+    assert deleted and "closure-retry" not in pauses
+    assert (state.outcome, state.record["hold_reason"], state.record["rejections"]) == (
+        "failure", "attempt-budget-exhausted", 1)  # judged: reworked, and this contract allows one attempt
+
+
+def test_a_closure_whose_remote_stays_unreadable_holds_as_infrastructure_visibly_and_never_for_the_founder(
+        closing, monkeypatch):
+    """Past the bounded CLOSURE retries: INFRASTRUCTURE_HOLD on the same accepted candidate, named by the run summary,
+    no Decision Inbox item; the next run, the remote readable again, lands it."""
+    [item] = planned(closing, "ONLY")
+    fetch = work_registry.RegistryClosure._fetch
+    monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", lambda self, clone, candidate: None)
+
+    summary = work_run(closing)
+
+    state = closing.state(item.id)
+    assert (state.stage.value, state.outcome, state.record["hold_reason"]) == (
+        "ACCEPT", "infrastructure-hold", "closure-infrastructure-exhausted:remote-unreadable")
+    assert summary["authority_blocked"] == () and summary["infrastructure_held"] == (item.id,)
+    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
+    monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", fetch)
+    work_run(closing)
+    assert closing.state(item.id).stage is DONE
 
 
 class Crash(BaseException):

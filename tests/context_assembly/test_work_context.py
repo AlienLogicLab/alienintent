@@ -80,10 +80,11 @@ class Cx(Fx):
     def digest(self, item) -> str:
         return contract_block(self.registry.records.show(item.id).packet, item.id).content_digest
 
-    def produced(self, item, review: str | None = REVIEW):
-        """The item at VERIFY on a published source-revision candidate, a fresh VERIFIER clone and (with `review`)
-        the PRODUCER's recorded self-review; MARKER is planted in every PRODUCER-only record. Returns the VERIFIER's
-        correlation, candidate and clone."""
+    def produced(self, item, review: str | None = REVIEW, baseline: str | None = "release"):
+        """The item at VERIFY on a published source-revision candidate, a fresh VERIFIER clone, (with `review`) the
+        PRODUCER's recorded self-review and (with `baseline`) the candidate's recorded execution baseline: the release
+        baseline, or the given main it was retargeted to; MARKER is planted in every PRODUCER-only record. Returns the
+        VERIFIER's correlation, candidate and clone."""
         branch = f"producer/{item.label}"
         revision = commit_file(self.clone, branch, "src/candidate.py", b"print('candidate')\n")
         git(self.clone, "push", "-q", "origin", branch)
@@ -114,6 +115,11 @@ class Cx(Fx):
                                             "producer", "producer"))
         if review is not None:
             self.context.record_self_review(item.id, candidate, review)
+        if baseline is not None:
+            release = self.releases().release_authorization(item.id).baseline
+            self.context.record_execution_baseline(item.id, candidate.content_digest, {
+                "release_baseline": release, "execution_baseline": release if baseline == "release" else baseline,
+                "kind": "proceed" if baseline == "release" else "retarget", "checks": []})
         correlation = f"launch:{item.id}:1"
         self.reserve(item, correlation)
         return correlation, candidate, clone
@@ -195,6 +201,40 @@ def test_the_verifier_gets_its_fields_and_never_the_producers_output(cx):
                                                       cx.digest(item)]
     # The exact CandidateRef is accepted the same way as its locator.
     assert cx.context.assemble(item.id, VERIFIER, correlation, cx.digest(item), candidate, clone) == package
+
+
+# --- the execution baseline (WORK-PREPARATION-REFILL R2, Founder decisions section 43) --------------------------------
+
+
+def test_a_producer_attempt_starts_at_its_recorded_execution_baseline_and_keeps_its_release_baseline(cx):
+    item = cx.admitted()
+    release = cx.releases().release_authorization(item.id).baseline
+    moved = commit_file(cx.clone, "main", "docs/elsewhere.md", b"elsewhere\n")
+    record = {"release_baseline": release, "execution_baseline": moved, "kind": "retarget",
+              "checks": [["plan-authority", True, ""]]}
+    cx.context.record_execution_baseline(item.id, f"launch:{item.id}:0", record)
+    fields = cx.context.assemble(item.id, PRODUCER, f"launch:{item.id}:0", cx.digest(item)).fields
+    assert (fields["starting_revision"], fields["execution_baseline"]) == (moved, record)
+    assert fields["release_record"]["baseline"] == release != moved
+
+
+def test_a_retargeted_candidate_is_verified_against_its_execution_baseline_not_its_release_baseline(cx):
+    item = cx.admitted()
+    release = cx.releases().release_authorization(item.id).baseline
+    moved = commit_file(cx.clone, "main", "docs/elsewhere.md", b"elsewhere\n")
+    correlation, candidate, clone = cx.produced(item, baseline=moved)
+    fields = cx.context.assemble(item.id, VERIFIER, correlation, cx.digest(item), candidate.locator, clone).fields
+    assert fields["starting_revision"] == fields["diff"]["base"] == fields["execution_baseline"]["execution_baseline"] \
+        == moved
+    assert fields["release_record"]["baseline"] == release != moved
+    assert "src/candidate.py" in fields["diff"]["text"] and "docs/elsewhere.md" not in fields["diff"]["text"]
+
+
+def test_a_candidate_with_no_recorded_execution_baseline_is_never_verified_against_the_release_baseline(cx):
+    item = cx.admitted()
+    correlation, candidate, clone = cx.produced(item, baseline=None)
+    hold(cx.context.assemble(item.id, VERIFIER, correlation, cx.digest(item), candidate.locator, clone),
+         "MISSING_RECORD", "execution_baseline")
 
 
 # --- checks 2 and 4: missing facts prevent launch --------------------------------------------------------------------

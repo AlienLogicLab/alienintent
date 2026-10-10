@@ -676,7 +676,7 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
     assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
     assert json.loads(capsys.readouterr().out) == {"identity": "ITEM", "stop_reason": "dependencies-or-authority-blocked",
                                                    "dispatched": ["ITEM"], "authority_blocked": [], "failed": [],
-                                                   "ran": []}
+                                                   "ran": [], "infrastructure_held": []}
     for extra, digest in ((["--contract-digest", "sha256:abc"], "sha256:abc"), ([], None)):
         assert cli.main(["--json", "--profile-factory", "x:y", "work", "context", "ITEM", "--role", "PRODUCER",
                          "--correlation", "launch:ITEM:0", *extra]) == 0
@@ -716,7 +716,7 @@ def test_work_run_renders_the_run_summary_inside_the_card_projector(monkeypatch,
     assert cli.main(["--json", "--profile-factory", "x:y", "work", "run"]) == 0
     assert json.loads(capsys.readouterr().out) == {
         "stop_reason": "eligible-backlog-exhausted", "dispatched": ["A"], "authority_blocked": [], "failed": [],
-        "ran": ["A", "A", "A"], "projection_diagnostics": {"A": "A: RuntimeError: x"}}
+        "ran": ["A", "A", "A"], "infrastructure_held": [], "projection_diagnostics": {"A": "A: RuntimeError: x"}}
     assert events == ["projector on", ("run", ["launch"]), ("sleep", operator.RETRY_PAUSE_SECONDS), "projector off"]
     assert store.recovery_reservations("registry") == ()
 

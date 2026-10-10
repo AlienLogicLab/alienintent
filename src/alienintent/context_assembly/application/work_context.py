@@ -23,9 +23,9 @@ from alienintent.context_assembly.application.work_registration import WorkRecor
 from alienintent.context_assembly.domain.packet_assessment import fingerprint
 from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason, canonical
 from alienintent.context_assembly.domain.work_context import (
-    CLOSURE, CLOSURE_REQUEST, FIELDS, PRODUCER, SELF_REVIEW, SELF_REVIEW_EXISTS, SELF_REVIEW_LABEL, VERIFIER,
-    ContextPackage,
-    candidate_document, candidate_revision, content, self_review_aggregate)
+    CLOSURE, CLOSURE_REQUEST, EXECUTION_BASELINE_KEYS, FIELDS, PRODUCER, SELF_REVIEW, SELF_REVIEW_EXISTS,
+    SELF_REVIEW_LABEL, VERIFIER, ContextPackage,
+    candidate_document, candidate_revision, content, execution_baseline_aggregate, self_review_aggregate)
 from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
 from alienintent.context_assembly.domain.work_identity import (
     RegistryBusy, RegistryUnavailable, StoredPointer, WorkIdentityRefused, valid_path)
@@ -47,6 +47,10 @@ SCOPE = frozenset({"public", "private"})
 # The one file of an invocation's bounded context export, `<launch>/exports/<correlation>/context.json`.
 EXPORT_FILE = "context.json"
 RELEASE_EVIDENCE = ("pointer", "attempt_id", "assessment_ref", "contract_digest", "baseline", "approver", "quote")
+
+
+class ExecutionBaselineExists(VersionConflict):
+    """Another execution baseline is already recorded under the same key."""
 
 
 class SelfReviewExists(VersionConflict):
@@ -190,6 +194,8 @@ class WorkContext:
             "release_record": {**asdict(release), "evidence_ref": asdict(item.approval_ref),
                                "evidence": {name: approval.get(name) for name in RELEASE_EVIDENCE}},
             "starting_revision": release.baseline,
+            "execution_baseline": self.attempt_baseline(item.id, correlation, release.baseline) if role == PRODUCER
+            else None,
             "allowed_scope": {"authorized_scope": contract.authorized_scope,
                               "excluded_scope": contract.excluded_scope},
             "required_evidence": {"verification_obligations": contract.verification_obligations,
@@ -210,6 +216,7 @@ class WorkContext:
                                       "candidate_custody_requirements": contract.candidate_custody_requirements}},
         }
         if role == PRODUCER:
+            fields["starting_revision"] = fields["execution_baseline"]["execution_baseline"]
             fields["assessment"] = {"assessment_ref": asdict(item.assessment_ref), "attempt_id": entry["attempt_id"],
                                     "input_fingerprint": entry["input_fingerprint"]}
             fields["context_command"] = self.command.document(item.id, role, correlation, None, contract_digest)
@@ -228,17 +235,70 @@ class WorkContext:
                                              "request": CLOSURE_REQUEST}
             else:
                 fields["producer_self_review"] = {"label": SELF_REVIEW_LABEL, **self._self_review(item.id, held)}
+            fields["execution_baseline"] = self._candidate_baseline(item.id, held, release.baseline)
+            fields["starting_revision"] = fields["execution_baseline"]["execution_baseline"]
             revision = candidate_revision(held)
             if revision is None:
                 raise _hold(MISSING, "diff", detail="the candidate is not a source revision git:<remote>#<branch>@<sha>")
             try:
-                diff = self.diff(clone, release.baseline, revision)
+                diff = self.diff(clone, fields["starting_revision"], revision)
             except WorkIdentityRefused as error:
                 raise _hold(MISSING, "diff", detail=str(error)) from None
-            fields["diff"] = {"base": release.baseline, "revision": revision, **content(diff)}
+            fields["diff"] = {"base": fields["starting_revision"], "revision": revision, **content(diff)}
             fields["context_command"] = self.command.document(item.id, role, correlation, held.locator,
                                                               contract_digest)
         return ContextPackage(role, json.loads(canonical(fields)))
+
+    def execution_baseline(self, identity: str, key: str) -> dict[str, object] | None:
+        """The recorded execution baseline under `key` as stored, or None."""
+        _, stored = self.store.read_state(self.store_profile, execution_baseline_aggregate(identity, key))
+        return dict(stored) if stored else None
+
+    def attempt_baseline(self, identity: str, correlation: str, release_baseline: str) -> dict[str, object]:
+        """The PRODUCER attempt's recorded execution baseline (WORK-PREPARATION-REFILL R2); with none recorded (no
+        revalidation wired) the release baseline, proceeded unchanged."""
+        recorded = self._baseline_record(identity, correlation, release_baseline)
+        return recorded if recorded is not None else {"release_baseline": release_baseline,
+                                                      "execution_baseline": release_baseline, "kind": "proceed",
+                                                      "checks": []}
+
+    def _candidate_baseline(self, identity: str, candidate: CandidateRef, release_baseline: str) -> dict[str, object]:
+        """The execution baseline recorded for this exact candidate when its PRODUCER published it: the VERIFIER's
+        and CLOSURE's starting revision and diff base, hence the regression gate's and the mutation control run's
+        baseline. Never the release baseline by default (Founder decisions section 43)."""
+        recorded = self._baseline_record(identity, candidate.content_digest, release_baseline)
+        if recorded is None:
+            raise _hold(MISSING, "execution_baseline", detail="no execution baseline recorded for this candidate")
+        return recorded
+
+    def _baseline_record(self, identity: str, key: str, release_baseline: str) -> dict[str, object] | None:
+        _, stored = self._read("execution_baseline", lambda: self.store.read_state(
+            self.store_profile, execution_baseline_aggregate(identity, key)))
+        if not stored:
+            return None
+        if set(stored) != EXECUTION_BASELINE_KEYS or not all(
+                isinstance(stored[name], str) and re.fullmatch(r"[0-9a-f]{40}", stored[name])
+                for name in ("release_baseline", "execution_baseline")):
+            raise _hold(MALFORMED, "execution_baseline", detail="the execution baseline record is malformed")
+        if stored["release_baseline"] != release_baseline:
+            raise _hold(MISMATCH, "execution_baseline", detail="recorded against another release baseline")
+        return dict(stored)
+
+    def record_execution_baseline(self, identity: str, key: str, document: Mapping[str, object]) -> None:
+        """One create-only store record of an execution baseline (`key`: a PRODUCER correlation or a candidate
+        digest); the same document again is a repeat, another is ExecutionBaselineExists."""
+        if set(document) != EXECUTION_BASELINE_KEYS:
+            raise ValueError("an execution baseline record holds exactly " + ", ".join(sorted(EXECUTION_BASELINE_KEYS)))
+        aggregate, expected = execution_baseline_aggregate(identity, key), json.loads(canonical(dict(document)))
+        _, existing = self.store.read_state(self.store_profile, aggregate)
+        if not existing:
+            try:
+                self.store.commit(self.store_profile, aggregate, 0, expected)
+                return
+            except VersionConflict:  # Another run recorded first: a repeat only if its record equals this one.
+                _, existing = self.store.read_state(self.store_profile, aggregate)
+        if existing != expected:
+            raise ExecutionBaselineExists(aggregate)
 
     def _attempt(self, identity: str, correlation: str, version: int) -> int:
         """Step 5's attempt check: `launch:<identity>:<v>` is current when it names this work item and either the

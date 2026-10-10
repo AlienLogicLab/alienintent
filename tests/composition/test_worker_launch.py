@@ -97,9 +97,12 @@ record = {{"argv": sys.argv, "stdin": text, "env": dict(os.environ), "cwd": os.g
           "own_context": own.stdout, "other_context": other.stdout}}
 records.mkdir(exist_ok=True)
 (records / f"{{role}}-{{len(list(records.iterdir()))}}.json").write_text(json.dumps(record))
-if role == "PRODUCER":
-    Path("launch-candidate.txt").write_text(f"candidate {{package['identity']}}\n")
-    subprocess.run(["git", "add", "launch-candidate.txt"], check=True)
+if role == "PRODUCER":  # the first `*-candidate.txt` of its scope, else launch-candidate.txt
+    target = next((path for path in package["allowed_scope"]["authorized_scope"] if path.endswith("-candidate.txt")),
+                  "launch-candidate.txt")
+    Path(target).parent.mkdir(parents=True, exist_ok=True)
+    Path(target).write_text(f"candidate {{package['identity']}}\n")
+    subprocess.run(["git", "add", target], check=True)
     subprocess.run(["git", "-c", "commit.gpgsign=false", "commit", "-qm", "candidate"], check=True)
     review = lines[next(i for i, line in enumerate(lines) if line.endswith("to this file:")) + 1]
     if not (mode.exists() and mode.read_text() == "no-review"):
@@ -151,10 +154,12 @@ class Launch(ReadyBoard):
     def __init__(self, root: Path, monkeypatch) -> None:
         super().__init__(root)
         self.root = root
+        self.proof = ["tests/test_launch_proof.py"]  # every packet declares its targeted proof (WPR R2)
         seed_verification_runner(self.clone)
         git(self.clone, "add", *VERIFICATION)
         git(self.clone, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c",
             "commit.gpgsign=false", "commit", "-qm", "feature-regression runner")
+        git(self.clone, "push", "-q", "origin", "main")  # canonical main holds the runner
         self.configuration_file = root / "project.json"
         self.configuration_file.write_text(json.dumps(self.document))
         self.host = root / "factory-director-host.json"
@@ -202,8 +207,12 @@ class Launch(ReadyBoard):
             [entry] = [a for a in self.registry.assessment.consumer.history(item.id)
                        if a["raw_ref"] == asdict(item.assessment_ref)]
             assert self.registry.authorization.authorize(item.id, item.pointer.commit, entry["attempt_id"],
-                                                         self.main(), QUOTE).answer is None
+                                                         self.canonical(), QUOTE).answer is None
         return self.stored(label)
+
+    def canonical(self) -> str:
+        """Current canonical main: the remote's main, the baseline a release records (WPR R2)."""
+        return git(self.root / "remote.git", "rev-parse", "main").decode().strip()
 
     def main(self) -> str:
         return git(self.clone, "rev-parse", "main").decode().strip()
@@ -248,7 +257,7 @@ def held(answer: str, reason: str, *refs: str) -> None:
 def test_one_step_per_launch_each_role_gets_its_package_model_and_starting_revision(fx):
     """Checks 1-4 and 6-8 over a PRODUCER launch, a VERIFIER launch and a launch at ACCEPT."""
     item = fx.authorized("UNIT")
-    baseline = fx.main()  # the release record's starting revision
+    baseline = fx.canonical()  # the release record's starting revision: canonical main
     other = fx.authorized("OTHER")  # Released too, eligible and never run by `work launch UNIT`.
     fx.store.commit("registry", f"release:{other.id}", 0, {"identity": other.id, "source": ReleaseSource.EXPLICIT_HUMAN})
     later = commit_file(fx.clone, "main", "docs/later.md", b"a commit added after the release record\n")
@@ -269,7 +278,8 @@ def test_one_step_per_launch_each_role_gets_its_package_model_and_starting_revis
         str(fx.codex), "exec", "--ephemeral", "--json", "--sandbox", "danger-full-access", "-C", str(workspace),
         "--model", "model-a", "-"]
     assert producer["stdin"].startswith(f"You are the PRODUCER for AlienIntent work item {item.id}")
-    # Check 3: the worktree starts at the release record's baseline; the later default-branch commit is not in it.
+    # Check 3: the worktree starts at the release record's baseline; the later commit on the clone's local main, which
+    # canonical (remote) main lacks, is never a starting revision (WORK-PREPARATION-REFILL R2).
     assert producer["head"] == baseline != later == fx.main()
     # Check 1: the package at the stated path, outside the worktree, is the PRODUCER's for this attempt.
     package = producer["package"]
@@ -725,23 +735,27 @@ def revision_of(state) -> str:
     return state.candidate.locator.rpartition("@")[2]
 
 
-def test_an_item_released_under_one_plan_revision_does_not_land_after_another_is_approved(closing):
+def test_an_item_released_under_one_plan_revision_does_not_land_after_another_is_approved(closing, monkeypatch):
     """PLAN-AUTHORITY-INHERITANCE / PLAN-TIP-AUTHORITY-RUNTIME-FIX: released under plan D1 and taken to ACCEPT, then
     the Founder's plan D2, which no longer grants obligation FIXTURE, lands on main's tip and is approved. Release admission guards only the PRODUCER, so
     CLOSURE's landing gate checks the contract against the LIVE authority:
     held as a scope violation carrying the owner-decision reason, no order journaled, nothing pushed, and the one
-    owner-decision attention item raised."""
+    owner-decision attention item raised. D2 lands after CLOSURE read its landing base (the race the gate exists for):
+    only the authority read sees it."""
     from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
     from tests.composition.test_work_registry import PLAN_QUOTE, PLAN_SCOPE, plan_text
     fx = closing.fx
     approval = fx.registry.plan_approval
     first = approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text()), PLAN_QUOTE).content_digest
+    git(fx.clone, "push", "-q", "origin", "main")  # the live authority is canonical main's plan
     item = closing.accepted(release_policy="automatic-on", authority_issuer="plan-authority:" + first,
                             authority_references=["README.md", f"{PLAN_PATH} obligation:FIXTURE"],
                             authorized_scope=["launch-candidate.txt"])
-    git(fx.clone, "push", "-q", "origin", "main")  # the landing base: the release baseline, so nothing else differs
-    assert approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
-        dict(PLAN_SCOPE["obligations"][0], label="OTHER")]))), PLAN_QUOTE).answer is None
+    # The landing base is the release baseline (canonical main), so nothing else differs.
+    second = commit_file(fx.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
+        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
+    assert approval.approve(second, PLAN_QUOTE).answer is None
+    monkeypatch.setattr(work_registry.WorkRegistry, "_canonical_main", lambda self, repository: second)
 
     closing.close(item.id)
 
@@ -1081,8 +1095,10 @@ def test_a_request_without_board_update_crashing_after_the_push_recovers_without
 
 @pytest.mark.parametrize("ambiguity", ["fast-forwarded", "unreadable"])
 def test_an_ambiguous_landing_holds_with_facts_and_is_settled_before_any_later_session(closing, monkeypatch, ambiguity):
-    """Check 8: the candidate already in the remote head, or an unreadable remote: a hold naming the facts, no push;
-    after `authorize`, the next launch settles the earlier order before any session."""
+    """Check 8: the candidate already in the remote head: a hold naming the facts, no push; after `authorize`, the
+    next launch settles the earlier order before any session. An unreadable remote is infrastructure, not ambiguity
+    (WORK-PREPARATION-REFILL R2, Founder decisions section 44): no hold for the Founder and no push; once the remote
+    is readable the next launch settles the earlier order and lands, with no decision."""
     fx = closing.fx
     item = closing.accepted()
     other = fx.authorized("OTHER")
@@ -1099,18 +1115,25 @@ def test_an_ambiguous_landing_holds_with_facts_and_is_settled_before_any_later_s
     closing.close(other.id)
     state = closing.state(item.id)
     [order] = closing.orders(item.id)
+    if ambiguity == "unreadable":
+        assert (state.outcome, state.record["closure_failure"]) == ("closure-retry", "remote-unreadable")
+        assert closing.pushes == []
+        assert item.id not in (fx.store.read_state("registry", "decision-inbox")[1].get("open") or {})
+        monkeypatch.setattr(RegistryClosure, "_url", url)
+        sessions = len(fx.runs("CLOSURE"))
+        closing.close(item.id)  # the earlier order is settled before the one new session
+        assert len(fx.runs("CLOSURE")) == sessions + 1
+        assert closing.pushes == ["pushed"] and closing.state(item.id).stage is LifecycleStage.DONE
+        return
     assert (state.outcome, state.record["hold_reason"]) == ("authority-block", "closure-hold:landing-ambiguous")
     assert closing.pushes == []
     facts = [order["order"][k] for k in ("base", "merge", "record")]
     escalation = json.dumps(fx.store.read_state("registry", "decision-inbox")[1]["open"][item.id])
     assert all(fact in escalation for fact in facts)
-    if ambiguity == "unreadable":
-        monkeypatch.setattr(RegistryClosure, "_url", url)
     assert fx.loaded().decide(item.id, "authorize", QUOTE)["answer"] is None
     sessions = len(fx.runs("CLOSURE"))
     closing.close(item.id)
-    assert len(fx.runs("CLOSURE")) == sessions + (0 if ambiguity == "fast-forwarded" else 1)
-    assert closing.pushes == ([] if ambiguity == "fast-forwarded" else ["pushed"])
+    assert len(fx.runs("CLOSURE")) == sessions and closing.pushes == []
 
 
 def _ancestors(closing: Closing, base: str, revision: str) -> list[str]:
@@ -1121,9 +1144,12 @@ def _ancestors(closing: Closing, base: str, revision: str) -> list[str]:
 @pytest.mark.parametrize("moves", [1, 3])
 def test_main_moving_to_an_ancestor_rebuilds_the_order_at_most_three_times(closing, monkeypatch, moves):
     """Check 12: each move to a proper ancestor of the candidate journals a new order; a third move holds."""
+    start = closing.head()
     for index in range(3):
         commit_file(closing.fx.clone, "main", f"docs/history-{index}.md", b"history\n")
+    git(closing.fx.clone, "push", "-q", "origin", "main")  # the candidate is built on canonical main (WPR R2)
     item = closing.accepted()
+    git(closing.remote, "update-ref", "refs/heads/main", start)  # the landing base: before that history
     base, revision = closing.head(), revision_of(closing.state(item.id))
     steps = iter(_ancestors(closing, base, revision)[:moves])
     original = LandingAuthority.land
@@ -2382,7 +2408,7 @@ def test_an_overtaken_write_whose_read_back_fails_is_still_reowed(closing, monke
 
 def test_the_verifier_is_told_the_gate_result_and_not_to_run_the_whole_suite(fx):
     item = fx.authorized("UNIT")
-    baseline = fx.main()
+    baseline = fx.canonical()  # the release baseline: canonical main
     fx.launch(item.id)
     revision = fx.loaded().coordinator(None, None).state(item.id).candidate.locator.rpartition("@")[2]
     fx.launch(item.id)

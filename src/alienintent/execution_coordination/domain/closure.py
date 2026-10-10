@@ -21,6 +21,12 @@ REQUEST_KEYS = frozenset({"identity", "revision", "actions", "findings"})
 # within the attempt budget, never an authority hold.
 REQUEST_REFUSALS = frozenset({"request-missing", "request-malformed", "request-keys", "request-identity",
                               "request-revision", "request-actions", "request-findings"})
+# Control-plane holds that are infrastructure, not judgment: canonical main (the landing remote, or the live plan
+# authority at its tip) could not be fetched. The coordinator retries CLOSURE on the same candidate within a bound, then
+# holds it as typed infrastructure, never an authority hold or a Founder decision (WORK-PREPARATION-REFILL R2, Founder
+# decisions section 44).
+REMOTE_UNREADABLE = "remote-unreadable"
+CLOSURE_INFRASTRUCTURE = frozenset({REMOTE_UNREADABLE})
 MAX_FINDINGS, MAX_FINDING_LENGTH = 20, 500
 REVISION = re.compile(r"[0-9a-f]{40}")
 _FACT = re.compile(r"[0-9a-f]{40}|unreadable")

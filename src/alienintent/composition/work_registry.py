@@ -96,7 +96,7 @@ from alienintent.context_assembly.adapters.work_item_repository import SQLiteWor
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
 from alienintent.context_assembly.application.inherited_release import INHERITED_RELEASE, OWNER_DECISION_REQUIRED, \
     InheritedRelease
-from alienintent.context_assembly.application.packet_assessment import PacketAssessment
+from alienintent.context_assembly.application.packet_assessment import UNAVAILABLE_REASON, PacketAssessment
 from alienintent.context_assembly.application.plan_approval import PlanApproval
 from alienintent.context_assembly.application.work_authorization import WorkAuthorization
 from alienintent.context_assembly.application.work_completion import WorkCompletion
@@ -104,7 +104,10 @@ from alienintent.context_assembly.application.work_context import EXPORT_FILE, C
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
+from alienintent.context_assembly.domain.baseline_revalidation import (
+    ADVANCED, BEHIND, DIVERGED, REPREPARE, BaselineDecision, reference_paths, revalidate)
 from alienintent.context_assembly.domain.packet_assessment import fingerprint
+from alienintent.context_assembly.domain.proof_set import ProofSetInvalid, parse_proof
 from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason
 from alienintent.context_assembly.application.work_completion import LANDING_UNVERIFIED, landing_check
 from alienintent.context_assembly.domain.work_context import CLOSURE, PRODUCER, VERIFIER
@@ -139,8 +142,8 @@ from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH, 
 from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
 from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, SCOPE_VIOLATION, contained
 from alienintent.execution_coordination.domain.closure import (
-    BOARD_UPDATED, LANDING_RECORD, MERGED_TO_MAIN, WORKSPACES_CLEANED, hold, is_fixed, parse_request, performable,
-    ready_to_land, receipt, rework, session_finding)
+    BOARD_UPDATED, LANDING_RECORD, MERGED_TO_MAIN, REMOTE_UNREADABLE, WORKSPACES_CLEANED, hold, is_fixed, parse_request,
+    performable, ready_to_land, receipt, rework, session_finding)
 from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.domain.custody import CandidateRef
@@ -148,7 +151,8 @@ from alienintent.execution_coordination.domain.escalation import DecisionRecord,
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.execution_coordination.ports.project_directory import ProjectItemState
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
-from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.execution_coordination.ports.worker_provider import (
+    CANONICAL_MAIN_UNAVAILABLE, WorkerInvocation, WorkerOutcome, WorkerProvider)
 from alienintent.installation.adapters.app_jwt import app_assertion
 from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
 from alienintent.installation.adapters.urllib_github_transport import UrllibGitHubTransport
@@ -576,17 +580,19 @@ class WorkRegistry:
         the caller's worker and artifacts. The release flag follows each contract (`_ContractRelease`): only an
         `automatic-on` (plan-derived) item is released by policy; an `explicit-human-off` item becomes eligible only
         through `release_and_start`. The release gate re-checks the release record (`work authorize`'s or `work
-        release`'s) against the packets repository's clone and default branch before every PRODUCER. The WIP limit is
+        release`'s) against canonical main as fetched into the packets repository's clone (refreshed when the
+        coordinator is built) before every PRODUCER. The WIP limit is
         read on every admission. Closure: `landing_enabled` is the `github` entry's `landing` flag, `started_item`
         builds a started item from its registry record (0.9) and `completed` projects the row after DONE (0.8)."""
         if self.ready_view is None:
             raise ConfigurationInvalid("the coordinator needs both the github and readiness entries")
         configuration = self.configuration
         packets, store = configuration.repositories[configuration.packets_repository], self.assessment.consumer.store
+        self._canonical_main(configuration.packets_repository)  # the gate reads canonical main as fetched: refresh it
         gate = ReleasePreconditionGate(StoredReleaseAuthorizations(store, "registry"),
                                        GitRevisionResolver({configuration.github.repository: packets.clone}),
-                                       packets.default_branch)
-        return FactoryCoordinator(store, _ContractRelease(self.ready_view, self.plan_approval.current), worker, artifacts, "registry",
+                                       canonical_ref(packets))
+        return FactoryCoordinator(store, _ContractRelease(self.ready_view, self._fetched_authority), worker, artifacts, "registry",
                                   automatic_release=True, release_gate=gate,
                                   wip_limit=lambda: wip_limit(self.host_configuration),
                                   recorded_completion=self.completion.recorded,
@@ -616,7 +622,7 @@ class WorkRegistry:
             return ReadyWorkItem(item.id, 0, self.configuration.github.repository, "registry", None,
                                  tuple(contract.dependencies), contract, contract.content_digest,
                                  item.assessment_ref.logical_id,
-                                 automatic_release=automatic(contract, self.plan_approval.current()))
+                                 automatic_release=automatic(contract, self._fetched_authority()))
         except Exception:  # noqa: BLE001 - an unusable registry record answers None, as recovery expects
             return None
 
@@ -869,7 +875,8 @@ class WorkRegistry:
         if user is None:
             source, workspaces, handover, preparation = GitSourceControl(), \
                 GitWorktreeAdapter(packets.clone, root / "workspaces"), None, \
-                LaunchPreparation(self.context, root / "context", repository)
+                LaunchPreparation(self.context, root / "context", repository, baseline=self._revalidate,
+                                  on_main=self._on_canonical_main)
             recovered = lambda invocation: _producer_worktree(root / "workspaces", invocation)  # noqa: E731
         else:
             worker_root = root / "worker"
@@ -885,7 +892,8 @@ class WorkRegistry:
                                                     environment, os.environ, workspaces)
             preparation = LaunchPreparation(self.context, root / "context", repository, worker=handover, user=user,
                                             environment=environment, packets_clone=packets.clone,
-                                            exports=root / "exports")
+                                            exports=root / "exports", baseline=self._revalidate,
+                                            on_main=self._on_canonical_main)
             recovered = lambda invocation: _producer_worktree(worker_root, invocation, "producer-")  # noqa: E731
         ownership = self.ownership
         process = CliWorkerProvider("routed", preparation.command, (), "explicit", PROVIDER_DIMENSIONS,
@@ -1199,8 +1207,13 @@ class WorkRegistry:
             return item is not None and not item.retired
 
         github = self.configuration.github
-        current = authority if authority is not None else \
-            None if self.plan_approval is None else self.plan_approval.current()
+        current = authority
+        if current is None and self.plan_approval is not None:
+            # One fetch of canonical main: an unknown tip is not "no plan", so the plan check is never skipped.
+            main = self._canonical_main(self.configuration.packets_repository)
+            if main is None:
+                return (UNAVAILABLE_REASON,)
+            current = self._plan_approval(self.configuration, tip=main).current()
         return unsatisfiable(contract, landing=github is not None and github.landing,
                              present_at_pointer=present_at_pointer, registered=registered,
                              provider_dimensions=PROVIDER_DIMENSIONS,
@@ -1208,20 +1221,106 @@ class WorkRegistry:
                              else lambda contract: outside_authority(contract, current))
 
     def protected_paths(self) -> tuple[str, ...] | None:
-        """The protected paths of the live plan authority (the plan at main's tip), or None without one."""
-        current = None if self.plan_approval is None else self.plan_approval.current()
+        """The protected paths PRODUCER containment judges a candidate by: the plan at the last fetched canonical main
+        (refreshed by the PRODUCER's own revalidation just before), a local read that a network failure cannot turn
+        into a false NO_PLAN_AUTHORITY rejection; fetched once if nothing was ever fetched. CLOSURE re-checks the live
+        authority before any landing. None without a plan authority."""
+        current = self._fetched_authority()
+        if current is None and self.plan_approval is not None and \
+                self._fetched_main(self.configuration.packets_repository) is None:
+            current = self.plan_approval.current()  # nothing was ever fetched: fetch once
         return None if current is None else current.scope.protected_paths
 
-    def _plan_approval(self, configuration: ProjectConfiguration) -> PlanApproval:
+    def _fetched_authority(self) -> PlanAuthority | None:
+        """The plan authority at the last fetched canonical main: a local read that cannot fail transiently, for
+        eligibility only (the READY snapshot, a started item). Nothing it answers releases, starts or lands work: a
+        release, each PRODUCER (revalidation) and each landing (CLOSURE's gate) read canonical main fresh."""
+        if self.plan_approval is None:
+            return None
+        main = self._fetched_main(self.configuration.packets_repository)
+        return None if main is None else self._plan_approval(self.configuration, tip=main).current()
+
+    def _fetched_main(self, repository: str) -> str | None:
+        """The last fetched canonical main (the remote-tracking ref, no fetch), or None."""
+        location = self.configuration.repositories.get(repository)
+        if location is None:
+            return None
+        try:
+            result = subprocess.run(["git", "rev-parse", "--verify", "--quiet",
+                                     f"{canonical_ref(location)}^{{commit}}"],
+                                    cwd=location.clone, capture_output=True, check=False, timeout=60)
+        except (OSError, subprocess.SubprocessError):
+            return None
+        head = result.stdout.decode(errors="replace").strip()
+        return head if result.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", head) else None
+
+    def _plan_approval(self, configuration: ProjectConfiguration, tip: str | None = None) -> PlanApproval:
         """`work approve-plan`: the canonical plan read at the commit from the packets repository's clone, the commit
         checked against its default branch; the evidence in the assessment evidence folder, the plan-authority
-        aggregates on the `readiness` store under profile `registry`."""
+        aggregates on the `readiness` store under profile `registry`. With `tip` its live authority is the plan at
+        that one pinned commit instead of current canonical main (one revalidation snapshot)."""
         consumer, name = self.assessment.consumer, configuration.packets_repository
         packets = configuration.repositories[name]
         return PlanApproval(consumer.repository, consumer.project, consumer.profile, consumer.store, "registry", name,
                             GitRevisionResolver({name: packets.clone}), packets.default_branch,
                             lambda commit: self.items.read_packet(StoredPointer(name, PLAN_PATH, commit)),
-                            lambda: self._head(name))
+                            (lambda: self._head(name)) if tip is None else (lambda: tip))
+
+    def _revalidate(self, identity: str) -> tuple[str, BaselineDecision] | None:
+        """Baseline revalidation of a PRODUCER attempt (WORK-PREPARATION-REFILL R2; Founder decisions sections 39 and
+        43): its release baseline and the decision against current canonical main, fetched ONCE; the plan authority,
+        the changed paths and the resulting starting revision all use that one SHA. Guarded: the contract's authorized
+        scope, the packet's declared proof files, its mutation paths and test files, and its authority reference paths
+        other than the canonical plan, which the authority check judges by content: a plan-derived (`automatic-on`)
+        contract must be inside the plan authority at that SHA. None when canonical main or its changed paths cannot
+        be read."""
+        name = self.configuration.packets_repository
+        record = self.records.show(identity)
+        release = self.context.releases.release_authorization(identity)
+        if record is None or record.packet is None or release is None or not release.baseline:
+            raise ValueError("no packet or release baseline to revalidate")
+        main = self._canonical_main(name)
+        if main is None:
+            return None
+        baseline, clone = str(release.baseline), self.configuration.repositories[name].clone
+
+        if not _has_commit(clone, baseline):  # pruned after main moved past it: off canonical history, not a failure
+            return baseline, revalidate(baseline, main, DIVERGED, (), (), (), True)
+        behind, advanced = _is_ancestor(clone, main, baseline), _is_ancestor(clone, baseline, main)
+        if behind is None or advanced is None:  # git could not answer: infrastructure, never "diverged"
+            return None
+        relation = BEHIND if behind else ADVANCED if advanced else DIVERGED
+        if relation != ADVANCED:
+            return baseline, revalidate(baseline, main, relation, (), (), (), True)
+        text = record.packet.decode("utf-8", errors="replace")
+        contract = contract_block(record.packet, identity)
+        errors, proof, mutations = [], None, None
+        try:
+            proof = parse_proof(text)
+        except ProofSetInvalid as error:
+            errors.append(f"proof: {error}")
+        try:
+            mutations = parse_mutations(text)
+        except MutationSpecInvalid as error:
+            errors.append(f"mutations: {error}")
+        guarded = [*contract.authorized_scope, *(proof.targeted_tests if proof else ()),
+                   *reference_paths(contract.authority_references, PLAN_PATH)]
+        for mutation in mutations.mutations if mutations else ():
+            guarded += [mutation.path, *(test.split("::")[0] for test in mutation.tests)]
+        reasons: tuple[str, ...] = ()
+        if contract.release_policy == "automatic-on":
+            authority = self._plan_approval(self.configuration, tip=main).current()
+            reasons = ("no readable plan authority at canonical main",) if authority is None \
+                else tuple(outside_authority(contract, authority))
+        try:
+            result = subprocess.run(["git", "diff", "--name-only", "--no-renames", "-z", baseline, main, "--"],
+                                    cwd=clone, capture_output=True, check=False, timeout=120)
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if result.returncode:
+            return None
+        changed = [path for path in result.stdout.decode(errors="replace").split("\0") if path]
+        return baseline, revalidate(baseline, main, relation, changed, guarded, reasons, proof is not None, errors)
 
     def _release(self, configuration: ProjectConfiguration) -> InheritedRelease:
         """`work release`: what `work authorize` writes, on the same store and evidence folder, with the composed
@@ -1231,20 +1330,45 @@ class WorkRegistry:
         return InheritedRelease(self.records, self.identities, consumer, consumer.repository, consumer.project,
                                 consumer.profile, self.assessment.authorizations,
                                 GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
-                                {name: location.default_branch for name, location in repositories.items()},
-                                self._head, self.plan_approval.current, self.satisfiable, self._owner_decision,
+                                {name: canonical_ref(location) for name, location in repositories.items()},
+                                self._head,
+                                lambda commit: self._plan_approval(self.configuration, tip=commit).current(),
+                                self.satisfiable, self._owner_decision,
                                 self.links)
 
     def _head(self, repository: str) -> str | None:
-        """The default branch's current head in the repository's configured clone, or None."""
-        location = self.configuration.repositories.get(repository)
-        if location is None:
+        """Current canonical main of the repository (`_canonical_main`), or None."""
+        return self._canonical_main(repository)
+
+    def _canonical_main(self, repository: str) -> str | None:
+        """Current canonical main: the default branch as fetched from the repository's remote into its configured
+        clone (`_fetch`), never the clone's local branch, which moves only when someone pulls (WORK-PREPARATION-REFILL
+        R2). None when the repository is not configured or the fetch or the read fails; `canonical_main_unreadable`
+        then says whether this read's fetch failed, so a caller tells infrastructure from a plan fault without a second
+        read."""
+        self.canonical_main_unreadable = False
+        if self.configuration.repositories.get(repository) is None:
             return None
-        result = subprocess.run(["git", "rev-parse", "--verify", "--quiet",
-                                 f"refs/heads/{location.default_branch}^{{commit}}"],
-                                cwd=location.clone, capture_output=True, check=False, timeout=60)
-        head = result.stdout.decode(errors="replace").strip()
-        return head if result.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", head) else None
+        try:
+            self._fetch(repository)
+            main = self._fetched_main(repository)
+        except (GitReadFailed, OSError, subprocess.SubprocessError):
+            main = None
+        self.canonical_main_unreadable = main is None  # this read's answer: canonical main could not be fetched
+        return main
+
+    def _on_canonical_main(self, revision: str) -> bool | None:
+        """Whether `revision` is current canonical main or one of its ancestors (fetched now); None when canonical main
+        cannot be read. A re-prepared PRODUCER attempt keeps its recorded execution baseline only when True, never
+        running ahead of canonical main."""
+        name = self.configuration.packets_repository
+        main = self._canonical_main(name)
+        if main is None:
+            return None
+        clone = self.configuration.repositories[name].clone
+        if main == revision:
+            return True
+        return _is_ancestor(clone, revision, main) if _has_commit(clone, revision) else False
 
     def _owner_decision(self, identity: str) -> None:
         """The durable typed owner-decision requirement of a refused inherited release: one JUDGMENT attention item per
@@ -1273,14 +1397,49 @@ class WorkRegistry:
                               releases=StoredReleaseAuthorizations(consumer.store, "registry"), fetch=self._fetch)
 
     def _fetch(self, repository: str) -> str:
-        """`git fetch <remote> <default branch>` in the repository's configured clone (only the remote-tracking ref
-        changes); answers that ref."""
+        """`git fetch <remote> <default branch>` in the repository's configured clone; answers the remote-tracking
+        ref. The same fetch also moves the local branch CANONICAL_MAIN, never checked out: a worker's clone (`git clone
+        --no-local` of this clone) carries local branches only, so canonical main's objects reach it that way
+        (WORK-PREPARATION-REFILL R2)."""
         location = self.configuration.repositories[repository]
-        result = subprocess.run(["git", "fetch", "--quiet", location.remote, location.default_branch],
+        branch = location.default_branch
+        result = subprocess.run(["git", "fetch", "--quiet", location.remote,
+                                 f"+refs/heads/{branch}:refs/remotes/{location.remote}/{branch}",
+                                 f"+refs/heads/{branch}:refs/heads/{CANONICAL_MAIN}"],
                                 cwd=location.clone, capture_output=True, check=False, timeout=300)
         if result.returncode:
             raise GitReadFailed("git fetch", str(location.clone), result.stderr.decode(errors="replace")[:200])
-        return f"refs/remotes/{location.remote}/{location.default_branch}"
+        return canonical_ref(location)
+
+
+def _has_commit(clone: Path, revision: str) -> bool:
+    """Whether the clone holds `revision` as a commit (after a fetch, a missing one is gone from canonical history)."""
+    try:
+        return subprocess.run(["git", "cat-file", "-e", f"{revision}^{{commit}}"], cwd=clone, capture_output=True,
+                              check=False, timeout=60).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return True  # unknown: let the ancestry question answer "unavailable"
+
+
+def _is_ancestor(clone: Path, older: str, newer: str) -> bool | None:
+    """`git merge-base --is-ancestor`: True or False, or None when git cannot answer (an error or a timeout)."""
+    try:
+        code = subprocess.run(["git", "merge-base", "--is-ancestor", older, newer], cwd=clone, capture_output=True,
+                              check=False, timeout=60).returncode
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return {0: True, 1: False}.get(code)
+
+
+# The configured clone's local copy of fetched canonical main (`_fetch`), so worker clones receive its objects.
+CANONICAL_MAIN = "alienintent/canonical-main"
+
+
+def canonical_ref(location: RepositoryLocation) -> str:
+    """Canonical main as last fetched into the configured clone: the remote-tracking ref of its default branch. Every
+    check that a release baseline or a plan commit is on canonical main reads it, never the local branch, which no
+    factory step moves (WORK-PREPARATION-REFILL R2)."""
+    return f"refs/remotes/{location.remote}/{location.default_branch}"
 
 
 def _consumer(configuration: ProjectConfiguration, store: OperationalStore) -> RetainedAssessmentConsumer:
@@ -1469,9 +1628,9 @@ def automatic(contract: BiuContract, current: PlanAuthority | None) -> bool:
 
 class _ContractRelease:
     """The READY view as the registry coordinator reads it: each item's release flag follows its own contract and the
-    live plan authority (`automatic`, the authority read once per snapshot), so an `explicit-human-off` item, or one
-    the tip's plan no longer grants, is never released by policy. Everything else is
-    the view's."""
+    plan authority at the last fetched canonical main (`automatic`, read once per snapshot, a local read), so an
+    `explicit-human-off` item, or one that plan no longer grants, is never released by policy; each PRODUCER and each
+    landing re-read canonical main fresh. Everything else is the view's."""
 
     def __init__(self, view: GitHubProjectsWorkManagement, current: Callable[[], PlanAuthority | None]) -> None:
         self._view, self._current = view, current
@@ -1545,8 +1704,12 @@ class LaunchPreparation:
     def __init__(self, context: WorkContext, context_root: Path, repository: str,
                  route: Callable[[str], dict[str, str]] = resolve_route, *, worker=None, user: str | None = None,
                  environment: Mapping[str, str] | None = None, packets_clone: Path | None = None,
-                 exports: Path | None = None) -> None:
+                 exports: Path | None = None,
+                 baseline: Callable[[str], tuple[str, BaselineDecision] | None] | None = None,
+                 on_main: Callable[[str], bool | None] | None = None) -> None:
         self.context, self.context_root, self.repository, self.route = context, Path(context_root), repository, route
+        # Baseline revalidation of each new PRODUCER attempt (WORK-PREPARATION-REFILL R2); None: the release baseline.
+        self.baseline, self.on_main = baseline, on_main
         self.kept: dict[str, tuple[dict[str, str], str]] = {}
         # Each invocation's starting revision from its package: the VERIFIER's regression base with a worker user.
         self.starting: dict[str, str] = {}
@@ -1589,6 +1752,10 @@ class LaunchPreparation:
                                              "budget_policy states no hard_wall_clock_seconds or cancellation_limit")
         if role == CLOSURE and not self._fixed(identity):
             return WorkerOutcome("ineligible")  # A guard only: `launch` answers closure-not-automated first.
+        if role == PRODUCER and self.baseline is not None:
+            held = self._revalidated(invocation)
+            if held is not None:
+                return held
         package = self.context.assemble(identity, role, invocation.correlation_id, invocation.contract_digest,
                                         invocation.candidate if role in (VERIFIER, CLOSURE) else None, clone)
         if isinstance(package, ContextHold):
@@ -1679,7 +1846,53 @@ class LaunchPreparation:
             prepare_worker_session(self.user, self.environment, self.packets_clone, self.worker.intake)
         return provider_command(route, workspace), text
 
+    def _revalidated(self, invocation: WorkerInvocation) -> WorkerOutcome | None:
+        """Record this PRODUCER attempt's execution baseline once (None), or the outcome instead of a session:
+        CANONICAL_MAIN_UNAVAILABLE when canonical main cannot be fetched, a typed infrastructure outcome the coordinator
+        retries and never an authority hold or a Founder decision (Founder decisions section 44); else the authority
+        block `baseline-revalidation-required` naming the failed checks (the item goes back through Work Preparation
+        and Agent Ready; it is never silently retargeted). A re-prepared attempt keeps its record only while that
+        revision is still on canonical main."""
+        unavailable = WorkerOutcome(CANONICAL_MAIN_UNAVAILABLE, findings=(
+            f"{CANONICAL_MAIN_UNAVAILABLE}: current canonical main could not be fetched; retried",))
+        identity, correlation = invocation.work_identity, invocation.correlation_id
+        try:
+            recorded = self.context.execution_baseline(identity, correlation)
+            if recorded is not None:
+                on_main = None if self.on_main is None else self.on_main(str(recorded["execution_baseline"]))
+                if on_main is None and self.on_main is not None:
+                    return unavailable
+                if on_main is False:
+                    return self._refusal(invocation, (
+                        f"{HoldReason.VERSION_DRIFT}: starting_revision: baseline-revalidation-required: "
+                        "baseline-on-main: the recorded execution baseline is no longer on canonical main"))
+                return None
+            answered = self.baseline(identity)
+            if answered is None:
+                return unavailable
+            release, decision = answered
+            if decision.kind == REPREPARE:
+                failed = "; ".join(f"{name}: {detail}" for name, passed, detail in decision.checks if not passed)
+                return self._refusal(invocation, f"{HoldReason.VERSION_DRIFT}: starting_revision: "
+                                                 f"baseline-revalidation-required: {failed}")
+            self.context.record_execution_baseline(identity, correlation, {
+                "release_baseline": release, "execution_baseline": decision.revision, "kind": decision.kind,
+                "checks": [list(check) for check in decision.checks]})
+        except Exception as error:  # noqa: BLE001 - no revalidation is no starting revision, never the stale one
+            return self._refusal(invocation, f"{HoldReason.MISSING_RECORD}: starting_revision: "
+                                             f"{type(error).__name__}: {error}")
+        return None
+
     def published(self, invocation: WorkerInvocation, candidate: CandidateRef) -> None:
+        """The candidate's execution baseline (its PRODUCER attempt's, Founder decisions section 43), then the
+        self-review; a record that cannot be written holds the VERIFIER's launch MISSING_RECORD instead."""
+        try:
+            identity = invocation.work_identity
+            release = self.context.releases.release_authorization(identity).baseline
+            self.context.record_execution_baseline(identity, candidate.content_digest, self.context.attempt_baseline(
+                identity, invocation.correlation_id, release))
+        except Exception:  # noqa: BLE001 - nothing is recorded; the VERIFIER's launch is held MISSING_RECORD
+            pass
         try:
             text = self.read(self.self_review_path(invocation.correlation_id)).decode("utf-8")
             if text.strip():
@@ -1782,9 +1995,11 @@ class RegistryClosure:
         clone = self._clone(invocation.correlation_id)
         head = self._fetch(clone, candidate)
         if head is None:
-            return (), (*findings, hold("remote-unreadable"))
+            return (), (*findings, hold(REMOTE_UNREADABLE))
         if self._reachable(clone, revision, head):
             return (), (*findings, hold("landing-ambiguous", head, revision))
+        if not self._present(clone, revision) and self._candidate_unreadable(clone, candidate):
+            return (), (*findings, hold(REMOTE_UNREADABLE))  # main fetched, the candidate's remote not: retried
         if not self._ancestor(clone, head, revision):
             return (), (*findings, rework(self._merge_base(clone, head, revision), head))
         digest = sha256(document).hexdigest()
@@ -1817,8 +2032,9 @@ class RegistryClosure:
             if contract.release_policy != "automatic-on":
                 return ()
             current = self._registry.plan_approval.current()
-            if current is None:
-                return (NO_PLAN_AUTHORITY,)
+            if current is None:  # that one read's fetch failed: infrastructure (retried), never "no plan authority"
+                return (REMOTE_UNREADABLE,) if getattr(self._registry, "canonical_main_unreadable", False) \
+                    else (NO_PLAN_AUTHORITY,)
             outside = outside_authority(contract, current)
             if outside:
                 self._registry._owner_decision(identity)
@@ -1839,6 +2055,8 @@ class RegistryClosure:
         identity, revision = invocation.work_identity, candidate.locator.rpartition("@")[2]
         # Every first order and every re-order at a new head: before the merge is built, journaled or landed.
         violations = self._scope_violations(clone, identity, base, revision)
+        if violations == (REMOTE_UNREADABLE,):
+            return (), (*findings, hold(REMOTE_UNREADABLE))
         if violations:
             return (), (*findings, hold("scope-violation", base, revision), *violations)
         built = self._build(clone, invocation, revision, base, actions, digest)
@@ -1871,8 +2089,8 @@ class RegistryClosure:
         last = orders[-1]
         order = last["order"]
         head = self._fetch(clone, candidate)
-        if head is None:
-            return (), (hold("landing-ambiguous", order["base"], order["merge"], order["record"], "unreadable"),)
+        if head is None:  # infrastructure, retried: the next CLOSURE re-settles this order from the journal first
+            return (), (hold(REMOTE_UNREADABLE),)
         published = (receipt("candidate-published", identity, revision),) \
             if self._present(clone, revision) else ()
         landed = next((entry for entry in reversed(orders) if self._reachable(clone, entry["order"]["record"], head)),
@@ -1888,12 +2106,16 @@ class RegistryClosure:
                 return published, (ready_to_land(order["merge"]),)
             if retry:  # a re-land of the journaled order passes the same landing gate first
                 violations = self._scope_violations(clone, identity, order["base"], revision)
+                if violations == (REMOTE_UNREADABLE,):
+                    return published, (hold(REMOTE_UNREADABLE),)
                 if violations:
                     return published, (hold("scope-violation", order["base"], revision), *violations)
                 self._authority.land(self._landing_order(last, clone))
                 return self._settle(invocation, candidate, clone, orders, retry=False, earlier=False)
             return published, (hold("landing-refused", order["base"], order["merge"], order["record"]),)
         # Main moved and our order did not land (the push is fast-forward only).
+        if not self._present(clone, revision) and self._candidate_unreadable(clone, candidate):
+            return published, (hold(REMOTE_UNREADABLE),)  # the candidate's remote could not answer: retried
         if not self._ancestor(clone, head, revision):
             return published, (rework(order["base"], head),)
         if int(order["attempt"]) >= MAX_ORDERS:
@@ -2099,6 +2321,21 @@ class RegistryClosure:
             self._git(clone, "fetch", "-q", url, f"+refs/heads/{reference}:refs/remotes/landing/candidate", check=True)
         head = self._git(clone, "rev-parse", self._tracking)
         return head or None
+
+    def _candidate_unreadable(self, clone: Path, candidate: CandidateRef) -> bool:
+        """Whether an absent candidate is infrastructure: the remote cannot be asked for its branch (`git ls-remote`
+        fails), or still advertises it at exactly the candidate (the fetch failed part way). A remote that answers
+        without it (the branch deleted or rewritten) is not: the absent candidate is then judged as before, never
+        retried forever (WORK-PREPARATION-REFILL R2)."""
+        reference, revision = candidate.locator.rpartition("#")[2].rpartition("@")[::2]
+        url = self._url()
+        if not reference:
+            return False
+        # One question: a reachable remote always advertises HEAD, so an empty answer means it could not be asked.
+        answer = self._git(clone, "ls-remote", url, "HEAD", f"refs/heads/{reference}") if url else ""
+        if not answer:
+            return True
+        return f"{revision}\trefs/heads/{reference}" in answer.splitlines()
 
     def _present(self, clone: Path, revision: str) -> bool:
         return self._git(clone, "cat-file", "-e", f"{revision}^{{commit}}", check=True)

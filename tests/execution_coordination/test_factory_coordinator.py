@@ -14,7 +14,7 @@ import pytest
 
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.domain.contract import BudgetPolicy
-from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
+from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage
 from alienintent.execution_coordination.domain.release import EXPLICIT_HUMAN_OFF
 from .domain.test_contract import valid_contract
 
@@ -1034,6 +1034,100 @@ def test_check6_retries_reworks_and_resumable_results_keep_the_slot_until_done(t
     assert worker.dispatched == ["H"] * 4 and len(seen) == 7
     assert all(slots == seen[0] and list(slots) == ["H"] for slots in seen) and limit.reads == 1
     assert coordinator.state("H").stage is LifecycleStage.DONE and _slots(store) == {}
+
+
+def _founder_decisions(store) -> dict:
+    return store.read_state("offline", "decision-inbox")[1].get("open") or {}
+
+
+def test_a_producer_that_cannot_read_canonical_main_is_retried_with_no_founder_decision(tmp_path: Path) -> None:
+    """WORK-PREPARATION-REFILL R2 (Founder decisions section 44: "Infrastructure failure is not an owner decision"):
+    the fetch of canonical main fails, then succeeds. The same work item keeps its stage and slot, uses no attempt,
+    raises no Founder decision, is retried on the next pass and reaches DONE."""
+    _, _, _, provider = _api()
+    coordinator, worker, store = _wip(tmp_path, [_item("F", 0, 1)],
+                                      {"F": [provider.CANONICAL_MAIN_UNAVAILABLE, "success"]}, Limit(1),
+                                      verdicts={"F": ["accept"]})
+    coordinator.start()
+    state = coordinator.state("F")
+    assert (state.stage, state.outcome, state.record["producer_retries"]) == (
+        LifecycleStage.IMPLEMENT, "producer-retry", 1)
+    assert worker.dispatched == ["F"] and _founder_decisions(store) == {} and list(_slots(store)) == ["F"]
+    pauses = []
+    coordinator.run(pause=lambda: pauses.append(True))
+    assert coordinator.state("F").stage is LifecycleStage.DONE and worker.dispatched == ["F", "F"]
+    assert coordinator.state("F").record.get("rejections", 0) == 0 and _founder_decisions(store) == {}
+
+
+def test_canonical_main_unreachable_past_the_retry_limit_is_a_typed_infrastructure_hold_never_a_founder_decision(
+        tmp_path: Path) -> None:
+    """Past the bounded retries the work item holds as typed infrastructure (no Decision Inbox item, no authority block,
+    slot kept); the next run of the factory retries it and, with canonical main reachable, takes it to DONE."""
+    _, _, _, provider = _api()
+    unavailable = [provider.CANONICAL_MAIN_UNAVAILABLE] * 3
+    coordinator, worker, store = _wip(tmp_path, [_item("X", 0, 1)], {"X": unavailable}, Limit(1))
+    summary = coordinator.run()
+    state = coordinator.state("X")
+    assert (state.outcome, state.record["hold_reason"]) == (
+        "infrastructure-hold", "producer-infrastructure-exhausted:canonical-main-unavailable")
+    assert worker.dispatched == ["X"] * 3 and summary.authority_blocked == () and _founder_decisions(store) == {}
+    assert list(_slots(store)) == ["X"] and state.stage is LifecycleStage.IMPLEMENT
+    restarted, restarted_worker, _ = _wip(tmp_path, [_item("X", 0, 1)], {"X": ["success"]}, Limit(1),
+                                          verdicts={"X": ["accept"]},
+                                          store=SQLiteOperationalStore(tmp_path / "run.sqlite"))
+    restarted.run()
+    assert restarted.state("X").stage is LifecycleStage.DONE and restarted_worker.dispatched == ["X"]
+    assert _founder_decisions(store) == {}
+
+
+def test_infrastructure_retries_count_failures_in_a_row_and_any_other_outcome_resets_them(tmp_path: Path) -> None:
+    """A rework between canonical-main failures breaks the row: two more failures after it are retried, not held."""
+    _, _, _, provider = _api()
+    unavailable = provider.CANONICAL_MAIN_UNAVAILABLE
+    coordinator, worker, store = _wip(tmp_path, [_attempts("R", 0, 1, maximum_attempts=5)],
+                                      {"R": [unavailable, provider.NO_CHANGE, unavailable, unavailable, "success"]},
+                                      Limit(1), verdicts={"R": ["accept"]})
+    coordinator.run()
+    assert coordinator.state("R").stage is LifecycleStage.DONE and len(worker.dispatched) == 5
+    assert _founder_decisions(store) == {}
+
+
+def test_a_release_gate_refusal_between_canonical_main_failures_resets_the_streak(tmp_path: Path) -> None:
+    """An authority block recorded at release breaks the row of PRODUCER infrastructure failures."""
+    from alienintent.execution_coordination.domain.release import ReleasePreconditionRefused
+    _, _, _, provider = _api()
+    checks = []
+
+    class Gate:
+        def check(self, item):
+            checks.append(item.identity)
+            if len(checks) == 3:
+                raise ReleasePreconditionRefused("baseline-reachable", "test data")
+    coordinator, worker, store = _wip(tmp_path, [_item("G", 0, 1)], {"G": [provider.CANONICAL_MAIN_UNAVAILABLE] * 2},
+                                      Limit(1))
+    coordinator._release_gate = Gate()
+    coordinator.run()
+    state = coordinator.state("G")
+    assert (state.outcome, state.record["producer_retries"]) == ("authority-block", 0)
+
+
+def test_a_closure_outcome_that_is_not_infrastructure_resets_the_closure_streak(tmp_path: Path) -> None:
+    _, _, _, provider = _api()
+    coordinator, _, _ = _wip(tmp_path, [_item("C", 0, 1)], {"C": []}, Limit(1))
+    item = _item("C", 0, 1)
+    invocation = provider.WorkerInvocation("C", "launch:C:3", item.contract.content_digest, provider.CLOSURE, None)
+    advanced = coordinator._advance(item, ExecutionState(), {"closure_infrastructure_retries": 2}, invocation,
+                                    provider.WorkerOutcome("authority-block"))
+    assert advanced.fields["closure_infrastructure_retries"] == 0
+
+
+def test_work_launch_names_an_infrastructure_hold_in_its_summary(tmp_path: Path) -> None:
+    _, _, _, provider = _api()
+    coordinator, worker, store = _wip(tmp_path, [_item("L", 0, 1)], {"L": [provider.CANONICAL_MAIN_UNAVAILABLE] * 3},
+                                      Limit(1))
+    summaries = [coordinator.launch("L") for _ in range(3)]
+    assert [s.infrastructure_held for s in summaries] == [(), (), ("L",)]
+    assert summaries[-1].authority_blocked == () and _founder_decisions(store) == {}
 
 
 def test_check6_final_outcomes_release_the_slot_and_authority_holds_keep_it(tmp_path: Path) -> None:
