@@ -1,0 +1,659 @@
+diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
+index af59423..988e56f 100644
+--- a/src/alienintent/composition/work_registry.py
++++ b/src/alienintent/composition/work_registry.py
+@@ -1173,7 +1173,10 @@ class WorkRegistry:
+                                  {name: location.default_branch for name, location in repositories.items()},
+                                  self.satisfiable)
+ 
+-    def _satisfiable(self, packet: bytes, commit: str, identity: str) -> tuple[str, ...]:
++    def _satisfiable(self, packet: bytes, commit: str, identity: str,
++                     authority: PlanAuthority | None = None) -> tuple[str, ...]:
++        """The composed satisfiability check; with `authority` (a release's one read of the live plan), checked against
++        exactly that authority, otherwise against a fresh read of the tip."""
+         try:
+             contract = contract_block(packet, identity)
+         except ContractInvalid as error:
+@@ -1196,7 +1199,8 @@ class WorkRegistry:
+             return item is not None and not item.retired
+ 
+         github = self.configuration.github
+-        current = None if self.plan_approval is None else self.plan_approval.current()
++        current = authority if authority is not None else \
++            None if self.plan_approval is None else self.plan_approval.current()
+         return unsatisfiable(contract, landing=github is not None and github.landing,
+                              present_at_pointer=present_at_pointer, registered=registered,
+                              provider_dimensions=PROVIDER_DIMENSIONS,
+@@ -1204,7 +1208,7 @@ class WorkRegistry:
+                              else lambda contract: outside_authority(contract, current))
+ 
+     def protected_paths(self) -> tuple[str, ...] | None:
+-        """The protected paths of the current approved plan authority, or None without one."""
++        """The protected paths of the live plan authority (the plan at main's tip), or None without one."""
+         current = None if self.plan_approval is None else self.plan_approval.current()
+         return None if current is None else current.scope.protected_paths
+ 
+@@ -1216,7 +1220,8 @@ class WorkRegistry:
+         packets = configuration.repositories[name]
+         return PlanApproval(consumer.repository, consumer.project, consumer.profile, consumer.store, "registry", name,
+                             GitRevisionResolver({name: packets.clone}), packets.default_branch,
+-                            lambda commit: self.items.read_packet(StoredPointer(name, PLAN_PATH, commit)))
++                            lambda commit: self.items.read_packet(StoredPointer(name, PLAN_PATH, commit)),
++                            lambda: self._head(name))
+ 
+     def _release(self, configuration: ProjectConfiguration) -> InheritedRelease:
+         """`work release`: what `work authorize` writes, on the same store and evidence folder, with the composed
+@@ -1457,15 +1462,15 @@ REMOTE_UNVERIFIED, REMOTE_CONFLICT, CANDIDATE_PUBLISHED = "REMOTE_UNVERIFIED", "
+ 
+ def automatic(contract: BiuContract, current: PlanAuthority | None) -> bool:
+     """A registry item is released by policy only while its own contract is plan-derived (`automatic-on`) and inside
+-    the CURRENT approved plan authority: a later approval of another plan revision stops it."""
++    the live plan authority (the plan at main's tip): a tip that no longer grants it stops it."""
+     return contract.release_policy == "automatic-on" and current is not None \
+         and not outside_authority(contract, current)
+ 
+ 
+ class _ContractRelease:
+     """The READY view as the registry coordinator reads it: each item's release flag follows its own contract and the
+-    current plan authority (`automatic`, the authority read once per snapshot), so an `explicit-human-off` item, or
+-    one released under a plan revision that is no longer current, is never released by policy. Everything else is
++    live plan authority (`automatic`, the authority read once per snapshot), so an `explicit-human-off` item, or one
++    the tip's plan no longer grants, is never released by policy. Everything else is
+     the view's."""
+ 
+     def __init__(self, view: GitHubProjectsWorkManagement, current: Callable[[], PlanAuthority | None]) -> None:
+@@ -1803,7 +1808,7 @@ class RegistryClosure:
+         a protected change main made after its release), read in this landing clone, against the registered
+         contract's `authorized_scope` and the current plan authority's protected paths. Release admission guards
+         only the PRODUCER, so this, the one landing gate, also requires the contract to be inside the CURRENT plan
+-        authority (read once here): an item released under a plan revision that is no longer current holds with its
++        authority (the plan at main's tip, read once here): an item the tip no longer grants holds with its
+         `owner-decision-required:` reasons and raises the owner-decision attention item. Anything unreadable is a
+         violation."""
+         try:
+diff --git a/src/alienintent/context_assembly/application/inherited_release.py b/src/alienintent/context_assembly/application/inherited_release.py
+index 461dbdf..876763e 100644
+--- a/src/alienintent/context_assembly/application/inherited_release.py
++++ b/src/alienintent/context_assembly/application/inherited_release.py
+@@ -1,11 +1,14 @@
+ """InheritedRelease: the control plane's release of a plan-derived work item (`work release`, no quote).
+ 
+-A work item inherits execution authority from the current approved plan authority only when it is at CAPTURE with a
++A work item inherits execution authority from the live plan authority (the canonical plan at the tip of main,
++PLAN-TIP-AUTHORITY-RUNTIME-FIX) only when it is at CAPTURE with a
+ pointer and no release record, its retained assessment of that pointer is READY, its contract is `automatic-on`, and
+ the composed satisfiability check with that authority gives no reasons. Otherwise it answers the named refusal and
+ writes nothing; OWNER_DECISION_REQUIRED also ensures the one durable owner-decision attention item (`owner_decision`).
+ Then, as `work authorize` does (its file is not changed): the evidence record with the same fields (approver the
+-contract's `authority_issuer`, quote the plan approval record's revision digest), the release record (the commit
++contract's `authority_issuer`, quote the live plan's reference, and `plan`: the exact tip commit and content digest
++it is released under and the digest it was prepared from; an item prepared from an older revision has been
++revalidated against the tip by the satisfiability check and its release text says so), the release record (the commit
+ point: create only, read back, its baseline the default branch's current head) and the row's `approval_ref`. Then
+ the card: linked if the item has none (`work link`), its text written (`work display`), Status READY and Priority
+ the obligation's written and each read back. A rerun after an unconfirmed card writes only the card.
+@@ -76,7 +79,7 @@ class InheritedRelease:
+                  evidence: EvidenceRepository, project: str, profile: str, releases: ReleaseRecords,
+                  revisions: RevisionResolver, release_points: Mapping[str, str], head: Callable[[str], str | None],
+                  authority: Callable[[], PlanAuthority | None],
+-                 satisfiable: Callable[[bytes, str, str], tuple[str, ...]], owner_decision: Callable[[str], None],
++                 satisfiable: Callable[[bytes, str, str, PlanAuthority], tuple[str, ...]], owner_decision: Callable[[str], None],
+                  links: Links) -> None:
+         """`head(repository)` answers the default branch's current head in its configured clone; `authority` the
+         current plan authority; `satisfiable` the composed check with it; `owner_decision(identity)` ensures the
+@@ -115,8 +118,8 @@ class InheritedRelease:
+         if contract.release_policy != "automatic-on":
+             return ReleaseResult(item.id, NOT_PLAN_DERIVED, detail=f"release_policy {contract.release_policy}")
+         authority = self.authority()
+-        reasons = ("no approved plan authority",) if authority is None \
+-            else self.satisfiable(record.packet, item.pointer.commit, item.id)
++        reasons = ("no readable plan authority at the tip of main",) if authority is None \
++            else self.satisfiable(record.packet, item.pointer.commit, item.id, authority)  # checked against this read
+         if reasons:
+             self.owner_decision(item.id)
+             return ReleaseResult(item.id, OWNER_DECISION_REQUIRED, detail="; ".join(reasons))
+@@ -125,6 +128,7 @@ class InheritedRelease:
+             return self._card(item.id, priority, ReleaseResult(item.id, None, asdict(item.approval_ref),
+                                                                asdict(existing), repeated=True))
+         repo = item.pointer.repo
++        prepared = contract.authority_issuer.removeprefix("plan-authority:")  # the revision it was prepared from
+         release_point, baseline = self.release_points.get(repo), self.head(repo)
+         resolves = release_point is not None and baseline is not None and self.revisions.resolves(repo, baseline)
+         reachable = resolves and self.revisions.is_reachable(repo, baseline, release_point)
+@@ -136,11 +140,15 @@ class InheritedRelease:
+                              "pointer": {"repo": repo, "path": item.pointer.path, "commit": item.pointer.commit},
+                              "attempt_id": entry["attempt_id"], "assessment_ref": entry["raw_ref"],
+                              "contract_digest": contract.content_digest, "baseline": baseline,
+-                             "approver": contract.authority_issuer, "quote": authority.record_ref}).decode(),
++                             "approver": contract.authority_issuer, "quote": authority.record_ref,
++                             "plan": {"commit": authority.commit, "content_digest": authority.content_digest,
++                                      "prepared_from": prepared}}).decode(),
+             None, INHERITED_RELEASE, INHERITED_RELEASE)
+         reference = record_ref(evidence)
++        revalidated = "" if prepared == authority.content_digest else f"; revalidated from {prepared}"
+         authorization = ReleaseAuthorization(item.id, reference.revision_digest, True, baseline,
+-                                             f"{INHERITED} {authority.content_digest} ({authority.record_ref})")
++                                             f"{INHERITED} {authority.content_digest} ({authority.record_ref})"
++                                             f"{revalidated}")
+         try:  # The release gate's own check, over the wording it checks at launch (as `work authorize`).
+             admit_release_preconditions(item.id, authorization, BaselineEvidence(str(release_point), resolves,
+                                                                                  reachable),
+diff --git a/src/alienintent/context_assembly/application/plan_approval.py b/src/alienintent/context_assembly/application/plan_approval.py
+index 2fc3b6a..ad537c7 100644
+--- a/src/alienintent/context_assembly/application/plan_approval.py
++++ b/src/alienintent/context_assembly/application/plan_approval.py
+@@ -5,10 +5,12 @@ from the packets repository's clone, only when that commit is reachable from the
+ plan-authority block. One evidence record binds the plan path, the commit, the content digest (`sha256:` of the file's
+ bytes), the parsed scope, the approver and the Founder's words; the store aggregate `plan-authority:<digest>` (create
+ only) names that record, so the same bytes approved again are a repeat and write no second record. The aggregate
+-`plan-authority:current`, written with the store's expected version, names the one current approval: each approval,
+-a re-approval of an older digest included, makes its digest current. Nothing else is current, so an item issued under
+-another digest fails the issuer rule and stops as owner-decision-required. Nothing here releases, launches or writes
+-to GitHub.
++`plan-authority:current`, written with the store's expected version, names the last approval recorded.
++
++PLAN-TIP-AUTHORITY-RUNTIME-FIX (Founder 2026-10-10): an approval is a record, never an activation switch. The live
++authority (`current`) is the canonical plan at the tip of the default branch, read and parsed from the clone at every
++call, with its exact commit and content digest; when the tip moves, the authority moves with it. Nothing here
++releases, launches or writes to GitHub.
+ """
+ from __future__ import annotations
+ 
+@@ -18,15 +20,16 @@ from hashlib import sha256
+ import json
+ import re
+ 
+-from alienintent.evidence_learning.domain.records import Header, Observation, canonical_bytes, record_ref, \
+-    ref_from_document
++from alienintent.evidence_learning.domain.records import Header, Observation, canonical_bytes, record_ref
+ from alienintent.evidence_learning.domain.refs import Ref
+ from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
+ from alienintent.execution_coordination.domain.plan_authority import (
+-    PLAN_PATH, PlanAuthority, PlanScopeInvalid, parse_scope, scope_from)
++    PLAN_PATH, PlanAuthority, PlanScopeInvalid, parse_scope)
+ from alienintent.execution_coordination.ports.operational_store import OperationalStore, VersionConflict
+ from alienintent.execution_coordination.ports.release_admission import RevisionResolver
+ 
++# Who the live authority's approver is: the protected plan tip itself, not a recorded approval.
++TIP_APPROVER = "canonical main tip"
+ # Answers `work approve-plan` returns instead of writing.
+ PLAN_NOT_ON_MAIN, PLAN_SCOPE_INVALID = "PLAN_NOT_ON_MAIN", "PLAN_SCOPE_INVALID"
+ PLAN_AUTHORITY, CURRENT = "plan-authority", "plan-authority:current"
+@@ -49,11 +52,13 @@ class PlanApprovalResult:
+ class PlanApproval:
+     def __init__(self, evidence: EvidenceRepository, project: str, profile: str, store: OperationalStore,
+                  store_profile: str, repository: str, revisions: RevisionResolver, release_point: str,
+-                 read: Callable[[str], bytes]) -> None:
++                 read: Callable[[str], bytes], tip: Callable[[], str | None]) -> None:
+         """`read(commit)` answers the plan file's bytes at `commit` from the packets repository's clone;
+-        `repository` and `release_point` are that clone's name and default branch."""
++        `repository` and `release_point` are that clone's name and default branch; `tip()` answers that branch's
++        current commit (None when it cannot be read)."""
+         self.evidence, self.store, self.store_profile = evidence, store, store_profile
+         self.repository, self.revisions, self.release_point, self.read = repository, revisions, release_point, read
++        self.tip = tip
+         self.definition = Ref(project, profile, PLAN_AUTHORITY + "/definition",
+                               "sha256:" + sha256(b"alienintent.context_assembly.application.plan_approval:"
+                                                  b"plan-authority").hexdigest(),
+@@ -102,18 +107,16 @@ class PlanApproval:
+         return PlanApprovalResult(commit, None, digest, dict(recorded["record_ref"]), bool(existing))
+ 
+     def current(self) -> PlanAuthority | None:
+-        """The current approved plan authority, rebuilt from its evidence record; None when none is current or its
+-        record cannot be read back exactly (no authority is inherited from an unreadable record)."""
+-        _, current = self.store.read_state(self.store_profile, CURRENT)
+-        if not current:
+-            return None
++        """The live plan authority: the canonical plan at the tip of the default branch, its exact commit and the
++        `sha256:` digest of its bytes; None when the tip, its plan or its plan-authority block cannot be read (no
++        authority is inherited from an unreadable or invalid plan). Writes nothing."""
+         try:
+-            reference = ref_from_document(current["record_ref"])
+-            values = json.loads(self.evidence.get(reference, frozenset({"private"})).value)
+-            if values["content_digest"] != current["content_digest"]:
++            commit = self.tip()
++            if commit is None or COMMIT.fullmatch(commit) is None:
+                 return None
+-            return PlanAuthority(values["plan_path"], values["commit"], values["content_digest"],
+-                                 reference.revision_digest, values["approver"], values["quote"],
+-                                 scope_from(values["scope"]))
+-        except Exception:  # noqa: BLE001 - an unreadable record is no authority
++            data = self.read(commit)
++            scope = parse_scope(data.decode("utf-8"))
++        except Exception:  # noqa: BLE001 - an unreadable plan is no authority
+             return None
++        return PlanAuthority(PLAN_PATH, commit, "sha256:" + sha256(data).hexdigest(), f"git:{commit}:{PLAN_PATH}",
++                             TIP_APPROVER, "", scope)
+diff --git a/src/alienintent/execution_coordination/domain/plan_authority.py b/src/alienintent/execution_coordination/domain/plan_authority.py
+index 890ab08..dad5fd1 100644
+--- a/src/alienintent/execution_coordination/domain/plan_authority.py
++++ b/src/alienintent/execution_coordination/domain/plan_authority.py
+@@ -1,10 +1,15 @@
+-"""Plan authority: the scope an approved canonical-plan revision grants to the Work Items derived from it. Pure.
++"""Plan authority: the scope the live canonical plan grants to the Work Items derived from it. Pure.
++
++Founder 2026-10-10 (PLAN-TIP-AUTHORITY-RUNTIME-FIX): the canonical plan at the tip of canonical main is the live
++authority root. A derived contract's `authority_issuer` names the plan revision it was prepared from (provenance and
++stale-work detection); it inherits when it is inside the live plan's scope, so an item prepared from an older revision
++is revalidated against the live one by the same rules, never by its recorded digest.
+ 
+ The canonical plan holds exactly one block fenced as ```json alienintent-plan-authority: the target repositories,
+ capabilities and budget caps derived work may use, the protected paths no derived work may touch, and the obligations,
+ each with its priority, the requirement ids it satisfies and the paths it may change. The block is part of the plan's
+ bytes, so the approved content digest covers every limit. A plan-derived contract has `release_policy` automatic-on,
+-`authority_issuer` `plan-authority:<content digest>` and exactly one `authority_references` entry
++`authority_issuer` `plan-authority:sha256:<64 hex>` and exactly one `authority_references` entry
+ `<plan path> obligation:<LABEL>`; `outside_authority` answers one `owner-decision-required:` reason per rule it fails.
+ Paths are compared normalized: relative POSIX, no `.`/`..`/empty part, no leading `/`, no `\\`, no glob character,
+ any trailing `/` removed; scope paths in their exact case, both sides of a comparison with a protected path
+@@ -14,11 +19,13 @@ from __future__ import annotations
+ 
+ from dataclasses import dataclass
+ import json
++import re
+ 
+ from alienintent.execution_coordination.domain.contract import BiuContract
+ 
+ PLAN_PATH = "docs/decisions/alienintent-v2-canonical-project-plan.md"
+ ISSUER_PREFIX = "plan-authority:"
++ISSUER = re.compile(r"plan-authority:sha256:[0-9a-f]{64}")
+ OPEN, CLOSE = "```json alienintent-plan-authority", "```"
+ OBLIGATION = "obligation:"
+ OWNER_DECISION = "owner-decision-required: "
+@@ -69,8 +76,8 @@ class PlanScope:
+ 
+ @dataclass(frozen=True)
+ class PlanAuthority:
+-    """One approved plan revision: `content_digest` is `sha256:` of the plan file's bytes at `commit`; `record_ref`
+-    the approval's evidence reference (its revision digest)."""
++    """One plan revision as authority: `content_digest` is `sha256:` of the plan file's bytes at `commit`; `record_ref`
++    a reference to it (the live authority: `git:<commit>:<plan path>`; a recorded approval: its evidence digest)."""
+     plan_path: str
+     commit: str
+     content_digest: str
+@@ -162,10 +169,11 @@ def obligation_labels(contract: BiuContract) -> tuple[str, ...]:
+ 
+ def outside_authority(contract: BiuContract, authority: PlanAuthority) -> tuple[str, ...]:
+     """One `owner-decision-required:` reason per failing rule, in rule order; empty when the contract inherits the
+-    authority, its priority then the obligation's."""
++    live authority, its priority then the obligation's. The issuer must name a plan revision by its digest; which
++    revision it names is provenance, so an item prepared from an older revision is revalidated by every other rule."""
+     scope, reasons = authority.scope, []
+-    if contract.authority_issuer != ISSUER_PREFIX + authority.content_digest:
+-        reasons.append(f"authority_issuer: not the approved plan authority {ISSUER_PREFIX}{authority.content_digest}")
++    if ISSUER.fullmatch(contract.authority_issuer or "") is None:
++        reasons.append(f"authority_issuer: not a plan authority digest ({ISSUER_PREFIX}sha256:<64 hex>)")
+     labels = obligation_labels(contract)
+     obligation = scope.obligation(labels[0]) if len(labels) == 1 else None
+     if len(labels) != 1:
+@@ -201,7 +209,8 @@ def outside_authority(contract: BiuContract, authority: PlanAuthority) -> tuple[
+                    for entry, path in entries if path is None or not any(under(path, a) for a in allowed)]
+         if refused:
+             reasons.append(f"authorized_scope: {'; '.join(refused)}")
+-    protected = [normalized(path, fold=True) for path in scope.protected_paths]
++    # The plan itself is always protected: an item that changed it would widen every later item's authority.
++    protected = [normalized(path, fold=True) for path in (*scope.protected_paths, PLAN_PATH)]
+     crossing = [entry for entry, path in entries if path is not None
+                 and any(under(path.casefold(), p) or under(p, path.casefold()) for p in protected)]
+     if crossing:
+diff --git a/tests/composition/test_work_registry.py b/tests/composition/test_work_registry.py
+index 1665efd..ca3dbd0 100644
+--- a/tests/composition/test_work_registry.py
++++ b/tests/composition/test_work_registry.py
+@@ -863,14 +863,16 @@ def test_check6_an_explicit_item_with_a_ready_card_and_no_release_record_is_neve
+     assert [i for i in registry._attention.list_pending() if i.origin.work_ref in (item.id, item.card_id)] == []
+ 
+ 
+-def test_a_new_plan_approval_stops_an_item_released_under_the_old_one(plan_board, tmp_path):
+-    """Released under plan D1, then the Founder approves D2: the item's issuer no longer names the current authority,
+-    so it is not released by policy and neither `start()` nor `launch()` dispatches it."""
++def test_a_plan_tip_that_drops_the_obligation_stops_an_item_released_under_the_old_one(plan_board, tmp_path):
++    """Released under plan D1, then main's tip moves to D2, which no longer grants obligation FIXTURE (no approval
++    step: the tip is the live authority): the item is no longer inside the live plan, so it is not released by policy
++    and neither `start()` nor `launch()` dispatches it."""
+     from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+     from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
+     item = plan_board.derived("PD-OLD", plan_board.approve())
+     assert plan_board.registry.release.release(item.id).answer is None
+-    plan_board.approve(plan_text(note=" revision 2"))
++    commit_file(plan_board.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
++        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
+     host = tmp_path / "factory-director-host.json"
+     host.write_text(json.dumps({"wipLimit": 1}))
+     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+diff --git a/tests/composition/test_worker_launch.py b/tests/composition/test_worker_launch.py
+index aabbf11..b0a03b7 100644
+--- a/tests/composition/test_worker_launch.py
++++ b/tests/composition/test_worker_launch.py
+@@ -725,13 +725,14 @@ def revision_of(state) -> str:
+     return state.candidate.locator.rpartition("@")[2]
+ 
+ 
+-def test_an_item_released_under_one_plan_revision_does_not_land_after_another_is_approved(closing):
+-    """PLAN-AUTHORITY-INHERITANCE: released under plan D1 and taken to ACCEPT, then the Founder approves D2. Release
+-    admission guards only the PRODUCER, so CLOSURE's landing gate checks the contract against the CURRENT authority:
++def test_an_item_released_under_one_plan_revision_does_not_land_after_the_tip_drops_its_obligation(closing):
++    """PLAN-AUTHORITY-INHERITANCE / PLAN-TIP-AUTHORITY-RUNTIME-FIX: released under plan D1 and taken to ACCEPT, then
++    main's tip moves to D2, which no longer grants obligation FIXTURE. Release admission guards only the PRODUCER, so
++    CLOSURE's landing gate checks the contract against the LIVE authority:
+     held as a scope violation carrying the owner-decision reason, no order journaled, nothing pushed, and the one
+     owner-decision attention item raised."""
+     from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
+-    from tests.composition.test_work_registry import PLAN_QUOTE, plan_text
++    from tests.composition.test_work_registry import PLAN_QUOTE, PLAN_SCOPE, plan_text
+     fx = closing.fx
+     approval = fx.registry.plan_approval
+     first = approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text()), PLAN_QUOTE).content_digest
+@@ -739,15 +740,16 @@ def test_an_item_released_under_one_plan_revision_does_not_land_after_another_is
+                             authority_references=["README.md", f"{PLAN_PATH} obligation:FIXTURE"],
+                             authorized_scope=["launch-candidate.txt"])
+     git(fx.clone, "push", "-q", "origin", "main")  # the landing base: the release baseline, so nothing else differs
+-    assert approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text(note=" revision 2")),
+-                            PLAN_QUOTE).answer is None
++    commit_file(fx.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
++        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))  # no approval step: the tip is the live authority
+ 
+     closing.close(item.id)
+ 
+     state = closing.state(item.id)
+     assert (state.stage, state.record["hold_reason"]) == (LifecycleStage.ACCEPT, "closure-hold:scope-violation")
+     [outcome] = [r for r in closing.journal() if r.get("event") == "invocation-outcome" and r["role"] == "CLOSURE"]
+-    assert any(finding.startswith("owner-decision-required: authority_issuer") for finding in outcome["findings"])
++    assert any(finding.startswith("owner-decision-required: authority_references: obligation FIXTURE")
++               for finding in outcome["findings"])
+     assert closing.orders(item.id) == [] and closing.pushes == []
+     assert len([i for i in fx.registry._attention.list_pending() if i.origin.work_ref == item.id]) == 1
+ 
+diff --git a/tests/context_assembly/test_inherited_release.py b/tests/context_assembly/test_inherited_release.py
+index c3fae0b..48a5bf7 100644
+--- a/tests/context_assembly/test_inherited_release.py
++++ b/tests/context_assembly/test_inherited_release.py
+@@ -8,6 +8,8 @@ and Priority. Plans, labels and quotes are TEST DATA.
+ from __future__ import annotations
+ 
+ from dataclasses import asdict
++from hashlib import sha256
++import json
+ 
+ import pytest
+ 
+@@ -15,7 +17,10 @@ from alienintent.context_assembly.application.inherited_release import (
+     ASSESSMENT_MISSING, NOT_PLAN_DERIVED, NOT_RELEASABLE, OWNER_DECISION_REQUIRED)
+ from alienintent.context_assembly.domain.work_context import PRODUCER, ContextPackage
+ from alienintent.execution_coordination.domain.release import ReleaseAuthorization
+-from tests.composition.test_work_registry import PlanBoard, plan_text
++from alienintent.evidence_learning.domain.records import ref_from_document
++from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
++from tests.composition.test_work_registry import PLAN_SCOPE, PlanBoard, plan_text
++from tests.context_assembly.test_work_identity_service import commit_file
+ 
+ 
+ @pytest.fixture
+@@ -53,7 +58,26 @@ def test_a_plan_derived_item_is_released_its_card_reads_back_ready_p0_and_its_pr
+     assert package.fields["release_record"]["evidence"]["approver"] == "plan-authority:" + digest
+ 
+ 
+-@pytest.mark.parametrize("case", ["released", "held", "explicit", "older-plan"])
++def test_an_item_prepared_under_an_older_plan_revision_is_revalidated_and_released_under_the_tip(fx):
++    """PLAN-TIP-AUTHORITY-RUNTIME-FIX: the plan at main's tip is the live authority, with no approval step. An item
++    prepared under an older revision is released when it is inside the tip's scope, and its release evidence records
++    the exact tip commit and digest it was released under and the digest it was prepared from."""
++    older = fx.approve()
++    item = fx.derived("PD-OLD", older)
++    tip = commit_file(fx.clone, "main", PLAN_PATH, plan_text(note=" revision 2"))  # no approval of revision 2
++    live = "sha256:" + sha256(plan_text(note=" revision 2")).hexdigest()
++
++    result = fx.loaded().release.release(item.id)
++
++    assert result.answer is None, result
++    release, _, _ = state(fx, item.id)
++    assert release.text.startswith(f"inherited from plan authority {live}") and f"revalidated from {older}" in release.text
++    package_evidence = json.loads(fx.registry.assessment.consumer.repository.get(
++        ref_from_document(result.evidence_ref), frozenset({"private"})).value)
++    assert package_evidence["plan"] == {"commit": tip, "content_digest": live, "prepared_from": older}
++
++
++@pytest.mark.parametrize("case", ["released", "held", "explicit", "dropped-obligation"])
+ def test_each_refusal_answers_its_code_and_writes_nothing(fx, case):
+     digest = fx.approve()
+     if case == "held":
+@@ -63,18 +87,40 @@ def test_each_refusal_answers_its_code_and_writes_nothing(fx, case):
+     if case == "released":  # a Founder release already recorded
+         fx.registry.assessment.authorizations.record(ReleaseAuthorization(
+             item.id, "sha256:" + "e" * 64, True, item.pointer.commit, "IMPLEMENT is authorized."))
+-    if case == "older-plan":  # the item was issued under the first digest; a second revision is approved after it
+-        fx.approve(plan_text(note=" revision 2"))
++    if case == "dropped-obligation":  # the tip moves to a revision that no longer grants the item's obligation
++        commit_file(fx.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
++            dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
+     before = state(fx, item.id)
+ 
+     result = fx.loaded().release.release(item.id)
+ 
+     assert result.answer == {"released": NOT_RELEASABLE, "held": ASSESSMENT_MISSING, "explicit": NOT_PLAN_DERIVED,
+-                             "older-plan": OWNER_DECISION_REQUIRED}[case]
++                             "dropped-obligation": OWNER_DECISION_REQUIRED}[case]
+     assert state(fx, item.id) == before and fx.github.fields == {}
+-    assert len(owner_decisions(fx, item.id)) == (1 if case == "older-plan" else 0)
+-    if case == "older-plan":
+-        assert "authority_issuer: not the approved plan authority" in result.detail
++    assert len(owner_decisions(fx, item.id)) == (1 if case == "dropped-obligation" else 0)
++    if case == "dropped-obligation":
++        assert "obligation FIXTURE is not in the approved plan" in result.detail
+         fx.loaded().release.release(item.id)  # a rerun keeps the one durable owner-decision item
+         [decision] = owner_decisions(fx, item.id)
+         assert (decision.origin.kind, decision.origin.event_identity) == ("JUDGMENT", OWNER_DECISION_REQUIRED)
++
++
++def test_a_release_records_and_checks_one_and_the_same_tip(fx):
++    """The tip moves while a release runs (a landing): the release checks the item against the tip it records, never
++    a second read. Here the second read would be a tip that drops the obligation; the release, made under the first,
++    records that first tip."""
++    digest = fx.approve()
++    item = fx.derived("PD-RACE", digest)
++    first = commit_file(fx.clone, "main", PLAN_PATH, plan_text(note=" revision 2"))  # still grants FIXTURE
++    dropped = commit_file(fx.clone, "side", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
++        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
++    registry = fx.loaded()
++    tips = iter([first])
++    registry.plan_approval.tip = lambda: next(tips, dropped)  # every read after the first sees the moved tip
++
++    result = registry.release.release(item.id)
++
++    assert result.answer is None, result
++    evidence = json.loads(fx.registry.assessment.consumer.repository.get(
++        ref_from_document(result.evidence_ref), frozenset({"private"})).value)
++    assert evidence["plan"]["commit"] == first
+diff --git a/tests/context_assembly/test_plan_approval.py b/tests/context_assembly/test_plan_approval.py
+index 54f9d4f..aa774aa 100644
+--- a/tests/context_assembly/test_plan_approval.py
++++ b/tests/context_assembly/test_plan_approval.py
+@@ -1,14 +1,16 @@
+-"""`work approve-plan` (PLAN-AUTHORITY-INHERITANCE acceptance check 3): the Founder's approval of one exact
+-canonical-plan revision, on the composed WorkRegistry over a temporary project with a local clone. Plans and quotes
+-are TEST DATA.
++"""`work approve-plan` (PLAN-AUTHORITY-INHERITANCE acceptance check 3) and the live plan authority
++(PLAN-TIP-AUTHORITY-RUNTIME-FIX, Founder 2026-10-10: the canonical plan at the tip of canonical main is the live
++authority root; an approval is a record, never an activation switch), on the composed WorkRegistry over a temporary
++project with a local clone. Plans and quotes are TEST DATA.
+ """
+ from __future__ import annotations
+ 
+ from hashlib import sha256
++import subprocess
+ 
+ import pytest
+ 
+-from alienintent.context_assembly.application.plan_approval import CURRENT, PLAN_NOT_ON_MAIN, PLAN_SCOPE_INVALID
++from alienintent.context_assembly.application.plan_approval import PLAN_NOT_ON_MAIN, PLAN_SCOPE_INVALID
+ from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH, parse_scope
+ from tests.composition.test_work_registry import PLAN_QUOTE, PlanBoard, plan_text
+ from tests.context_assembly.test_work_authorization import dump
+@@ -26,32 +28,35 @@ def written(fx: PlanBoard) -> tuple:
+     return dump(fx.root / "readiness.sqlite"), sorted(p.name for p in objects.iterdir()) if objects.is_dir() else []
+ 
+ 
+-def test_an_approval_records_the_exact_revision_and_becomes_current(fx):
++def test_an_approval_records_the_exact_revision_once(fx):
+     data = plan_text()
+     commit = commit_file(fx.clone, "main", PLAN_PATH, data)
+     result = fx.registry.plan_approval.approve(commit, PLAN_QUOTE)
+     assert (result.answer, result.repeated, result.content_digest) == (None, False,
+                                                                        "sha256:" + sha256(data).hexdigest())
+-    current = fx.loaded().plan_approval.current()  # read back by another process
+-    assert (current.commit, current.content_digest, current.quote, current.approver) == (
+-        commit, result.content_digest, PLAN_QUOTE, "Founder")
+-    assert current.scope == parse_scope(data.decode()) and current.record_ref == result.evidence_ref["revision_digest"]
+-
+     before = written(fx)
+     again = fx.registry.plan_approval.approve(commit, PLAN_QUOTE)
+     assert (again.answer, again.repeated, again.evidence_ref) == (None, True, result.evidence_ref)
+     assert written(fx) == before
+ 
+ 
+-def test_re_approving_an_older_revision_makes_it_current_again(fx):
+-    first = fx.approve()
+-    second = fx.approve(plan_text(note=" revision 2"))
+-    assert fx.registry.plan_approval.current().content_digest == second
+-    commit = commit_file(fx.clone, "main", PLAN_PATH, plan_text())
+-    assert fx.registry.plan_approval.approve(commit, PLAN_QUOTE).repeated is True
+-    assert fx.registry.plan_approval.current().content_digest == first
+-    _, current = fx.registry.store.read_state("registry", CURRENT)
+-    assert current["content_digest"] == first
++def test_the_live_authority_is_the_plan_at_the_tip_of_main_with_no_approval(fx):
++    """No `approve-plan` is needed: the plan at main's tip is the authority (read back by another process), and when
++    the tip moves the authority moves with it, whatever was approved before. Reading it writes nothing."""
++    first_data = plan_text()
++    first = commit_file(fx.clone, "main", PLAN_PATH, first_data)
++    before = written(fx)
++    current = fx.loaded().plan_approval.current()
++    assert (current.commit, current.content_digest, current.plan_path) == (
++        first, "sha256:" + sha256(first_data).hexdigest(), PLAN_PATH)
++    assert current.scope == parse_scope(first_data.decode()) and written(fx) == before
++    fx.registry.plan_approval.approve(first, PLAN_QUOTE)  # an approval of the old revision does not pin it
++    second_data = plan_text(note=" revision 2")
++    second = commit_file(fx.clone, "main", PLAN_PATH, second_data)
++    current = fx.loaded().plan_approval.current()
++    assert (current.commit, current.content_digest) == (second, "sha256:" + sha256(second_data).hexdigest())
++    commit_file(fx.clone, "main", PLAN_PATH, b"# plan\n\n```json alienintent-plan-authority\n{}\n```\n")
++    assert fx.loaded().plan_approval.current() is None  # no authority from a tip whose block is invalid
+ 
+ 
+ @pytest.mark.parametrize("case", ["side-branch", "bad-block", "empty-quote"])
+@@ -66,4 +71,13 @@ def test_each_refusal_writes_nothing(fx, case):
+     else:
+         with pytest.raises(ValueError):
+             fx.registry.plan_approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text()), " ")
+-    assert written(fx) == before and fx.registry.plan_approval.current() is None
++    assert written(fx) == before
++    assert (fx.registry.plan_approval.current() is None) is (case != "empty-quote")  # the tip's plan, if valid
++
++
++def test_a_tag_named_like_the_branch_never_becomes_the_authority(fx):
++    """Only the branch `refs/heads/main` is read: a tag `main` pointing at a side-branch plan is ignored."""
++    tip = commit_file(fx.clone, "main", PLAN_PATH, plan_text())
++    side = commit_file(fx.clone, "side", PLAN_PATH, plan_text(note=" side"))
++    subprocess.run(["git", "tag", "main", side], cwd=fx.clone, check=True, capture_output=True)
++    assert fx.loaded().plan_approval.current().commit == tip
+diff --git a/tests/execution_coordination/domain/test_plan_authority.py b/tests/execution_coordination/domain/test_plan_authority.py
+index 725ff7f..3ce2ad9 100644
+--- a/tests/execution_coordination/domain/test_plan_authority.py
++++ b/tests/execution_coordination/domain/test_plan_authority.py
+@@ -45,11 +45,22 @@ def test_a_contract_inside_its_obligation_inherits():
+     assert outside_authority(contract(), AUTHORITY) == ()
+ 
+ 
++def test_a_contract_prepared_under_an_older_plan_revision_is_revalidated_against_the_live_one():
++    """PLAN-TIP-AUTHORITY-RUNTIME-FIX: the issuer digest records where the item was prepared (provenance); authority is
++    the live plan, so an item from an older revision inherits exactly when it is inside the live plan's scope."""
++    older = contract(authority_issuer="plan-authority:sha256:" + "f" * 64)
++    assert outside_authority(older, AUTHORITY) == ()
++    [reason] = outside_authority(contract(authority_issuer="plan-authority:sha256:" + "f" * 64,
++                                          authority_references=[f"{PLAN_PATH} obligation:OTHER"]), AUTHORITY)
++    assert "obligation OTHER is not in the approved plan" in reason
++
++
+ BUDGET = {"maximum_attempts": 1, "hard_wall_clock_seconds": 60, "cancellation_limit": 1}
+ 
+ 
+ @pytest.mark.parametrize(("change", "words"), [
+-    ({"authority_issuer": "plan-authority:sha256:" + "f" * 64}, "authority_issuer: not the approved"),
++    ({"authority_issuer": "plan-authority:sha256:" + "f" * 63}, "authority_issuer: not a plan authority digest"),
++    ({"authority_issuer": "Founder"}, "authority_issuer: not a plan authority digest"),
+     ({"authority_references": ["README.md"]}, "exactly one"),
+     ({"authority_references": [f"{PLAN_PATH} obligation:SAMPLE", f"{PLAN_PATH} obligation:SAMPLE"]}, "exactly one"),
+     ({"authority_references": [f"{PLAN_PATH} obligation:OTHER"]}, "obligation OTHER is not in the approved plan"),
+@@ -104,3 +115,13 @@ def test_check7_the_canonical_plan_states_the_rule_and_holds_one_block():
+     assert {"conftest.py", "pyproject.toml", "config/", "tools/fitness/",
+             "src/alienintent/execution_coordination/domain/scope_containment.py",
+             "tests/execution_coordination/test_containment_wiring.py"} <= set(scope.protected_paths)
++
++
++def test_the_plan_itself_is_protected_whatever_the_live_block_says():
++    """PLAN-TIP-AUTHORITY-RUNTIME-FIX: with the tip as the live authority, a derived item that changed the plan would
++    widen every later item's authority, so the canonical plan is a protected path even when the block omits it."""
++    scope = dict(SCOPE, protected_paths=["config/"],
++                 obligations=[dict(SCOPE["obligations"][0], allowed_paths=["docs/", "src/"])])
++    authority = PlanAuthority(PLAN_PATH, "c" * 40, DIGEST, "git:x", "canonical main tip", "", parse_scope(plan(scope)))
++    [reason] = outside_authority(contract(authorized_scope=[PLAN_PATH]), authority)
++    assert f"crosses a protected path: {PLAN_PATH}" in reason
+diff --git a/tests/execution_coordination/test_containment_wiring.py b/tests/execution_coordination/test_containment_wiring.py
+index 6640b84..0c6cc37 100644
+--- a/tests/execution_coordination/test_containment_wiring.py
++++ b/tests/execution_coordination/test_containment_wiring.py
+@@ -40,13 +40,13 @@ SRC = Path(__file__).resolve().parents[2] / "src" / "alienintent"
+ PROTECTED = ("docs/decisions/", "src/protected.py")
+ 
+ 
+-def plan_at(digest: str) -> PlanAuthority:
+-    """A current plan authority with PROTECTED and one obligation FIXTURE over `src/` (TEST DATA)."""
++def plan_at(digest: str, label: str = "FIXTURE") -> PlanAuthority:
++    """A live plan authority with PROTECTED and one obligation `label` over `src/` (TEST DATA)."""
+     scope = {"target_repositories": ["AlienLogicLab/alienintent"], "capabilities": ["python"],
+              "budget_caps": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600, "cancellation_limit": 1,
+                              "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
+              "protected_paths": list(PROTECTED),
+-             "obligations": [{"label": "FIXTURE", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
++             "obligations": [{"label": label, "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+                               "allowed_paths": ["src/"]}]}
+     text = f"```json alienintent-plan-authority\n{json.dumps(scope)}\n```\n"
+     return PlanAuthority(PLAN_PATH, "c" * 40, digest, "sha256:" + "b" * 64, "Founder", "approved", parse_scope(text))
+@@ -277,21 +277,31 @@ def test_closure_refuses_an_automatic_on_candidate_outside_its_boundary_before_a
+ 
+ 
+ def test_closure_refuses_a_candidate_outside_the_current_plan_authority_and_raises_one_owner_decision(tmp_path):
+-    """Released under D1, D2 is current at CLOSURE: the contract is checked against the current authority at the
+-    landing gate, held before any order, with an owner-decision reason and the owner-decision attention item."""
++    """Released under D1, the tip is D2 at CLOSURE and no longer grants obligation FIXTURE: the contract is checked
++    against the live authority at the landing gate, held before any order, with an owner-decision reason and the
++    owner-decision attention item."""
+     landed, decisions = [], []
+-    revision, findings, orders, head = close(tmp_path, "src/a.py", "automatic-on", current=plan_at(D2),
++    revision, findings, orders, head = close(tmp_path, "src/a.py", "automatic-on", current=plan_at(D2, "OTHER"),
+                                              authority=SimpleNamespace(land=landed.append), decisions=decisions)
+     assert findings[0] == hold("scope-violation", head, revision) and (orders, landed) == ([], [])
+-    assert any(finding.startswith("owner-decision-required: authority_issuer") for finding in findings[1:])
++    assert any(finding.startswith("owner-decision-required: authority_references: obligation FIXTURE")
++               for finding in findings[1:])
+     assert decisions == ["work"]
+ 
+ 
++def test_closure_lands_a_candidate_released_under_an_older_plan_revision_still_inside_the_tip(tmp_path):
++    """PLAN-TIP-AUTHORITY-RUNTIME-FIX: released under D1, the tip is D2 and still grants obligation FIXTURE: the
++    candidate is revalidated against the tip and reaches its landing."""
++    _, findings, _, _ = close(tmp_path, "src/a.py", "automatic-on", current=plan_at(D2))
++    assert [finding.split(":", 1)[0] for finding in findings] == ["ready-to-land"]
++
++
+ def test_a_journaled_order_is_not_re_landed_after_its_plan_authority_is_replaced(tmp_path):
+-    """The order was journaled and handed over under D1 (the push did not land); D2 is current when the order is
+-    re-landed at the same base: held, the Landing Authority is not called again."""
++    """The order was journaled and handed over under D1 (the push did not land); the tip is D2, which no longer
++    grants obligation FIXTURE, when the order is re-landed at the same base: held, the Landing Authority is not called
++    again."""
+     landed = []
+-    revision, findings, orders, head = close(tmp_path, "src/a.py", "automatic-on", reconcile_under=plan_at(D2),
++    revision, findings, orders, head = close(tmp_path, "src/a.py", "automatic-on", reconcile_under=plan_at(D2, "OTHER"),
+                                              authority=SimpleNamespace(land=landed.append))
+     assert len(orders) == 1 and len(landed) == 1
+     assert findings[0] == hold("scope-violation", head, revision)
