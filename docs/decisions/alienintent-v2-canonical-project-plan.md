@@ -450,15 +450,19 @@ Requirements: SF-REQ-010, 013.
 
 Integrate Agent Ready only through its public CLI/MCP contract; retain raw assessment + provenance; AlienIntent performs authority-bearing lifecycle mutation.
 
+Readiness includes **targeted proof-set completeness**. The Work Item's targeted acceptance/test set is part of its proof contract, not an implementation convenience. Agent Ready must refuse READY when the known blast radius is not represented in that set. When the whole-suite regression gate later discovers a real regression outside the declared targeted set, treat that as a readiness/proof-contract false positive: the packet is incomplete, not merely the candidate. A corrected or re-issued Work Item must add the newly exposed affected tests to its targeted proof set. Do not burn additional PRODUCER/VERIFIER attempts on a pinned diff already proven invalid by such gate evidence.
+
 Requirements: SF-REQ-015.
 
 ### V2-208 — Mechanical obligations and architecture conformance before READY
 
 Derive mechanically testable obligations before implementation and enforce architecture fitness/readiness preconditions.
 
+Work Preparation and Agent Ready should use deterministic dependency/test-impact facts, prior regression evidence and known execution-path relationships to derive the smallest sufficiently complete targeted proof set. The regression gate remains the sole owner of whole-suite execution and acts as a backstop, not as the normal mechanism for discovering an omitted blast radius. Repeated gate-only discoveries outside targeted proof are readiness defects and Engineering Yield cost.
+
 Requirements: SF-REQ-014, 018.
 
-**M2 demonstration:** submit a P0 requirement through REST or the requirements UX, preserve the exact input/provenance, resolve one deliberately ambiguous decision, produce specification/design/plan, compile BIUs, assess through Agent Ready, and obtain a correctly prioritized READY queue without hand-editing files or Project fields.
+**M2 demonstration:** submit a P0 requirement through REST or the requirements UX, preserve the exact input/provenance, resolve one deliberately ambiguous decision, produce specification/design/plan, compile BIUs, assess through Agent Ready, and obtain a correctly prioritized READY queue without hand-editing files or Project fields. Include a deliberately incomplete targeted proof set whose omitted affected test is exposed by regression evidence, and prove the Work Item is classified as an incomplete proof contract/readiness false positive and is corrected before re-release rather than consuming repeated implementation attempts.
 
 # M3 — Real Single-Project Autonomous Delivery
 
