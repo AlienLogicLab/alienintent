@@ -1,7 +1,7 @@
 # Work unit: plan tip is the live authority (runtime fix)
 
-**Label:** `PLAN-TIP-AUTHORITY-RUNTIME-FIX` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 1, 2026-10-10. Not registered.
+**Label:** `PLAN-TIP-AUTHORITY-RUNTIME-FIX` (a document label; permanent id `c2c5b816-ec10-404f-8c2b-20da0f0a0861`).
+**Status:** Revision 1, 2026-10-10. Registered (CAPTURE).
 **Authority:** Founder authorization 2026-10-10 (decisions section 31), quoted in `fixed_decisions`; it changes protected
 plan-authority/release machinery, so it is not plan-derived and is released by `work authorize` with those words.
 **Starting revision:** main `83eb7b7`.
@@ -11,7 +11,7 @@ plan-authority/release machinery, so it is not plan-derived and is released by `
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "c2c5b816-ec10-404f-8c2b-20da0f0a0861",
  "version": "revision-1",
  "intent": "Make the runtime enforce the approved plan: the canonical plan at the tip of canonical main is the live plan authority, read at every decision with its exact commit and digest; no approve-plan snapshot is needed to activate a revision; a derived Work Item records the plan revision it was prepared from and the tip it was released under, and an item prepared from an older revision is revalidated against the tip by the same scope rules before inherited release and again at CLOSURE.",
  "satisfied_requirement_ids": [
