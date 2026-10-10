@@ -44,6 +44,8 @@ and writes only the one retained record, through the existing journal port.
 
 from __future__ import annotations
 
+import json
+
 from typing import Callable, Mapping
 
 from alienintent.execution_coordination.application.factory_coordinator import ROLE_BY_STAGE
@@ -144,7 +146,7 @@ class RoleBindingGuard(WorkerProvider):
         if not self._bound():
             return "durable-outcome-binding-disconnected"
         try:
-            records = self._journal.records()
+            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
         except JournalUnreadable:
             return "durable-outcome-binding-unreadable"
         if any(record.get("correlation_id") == invocation.correlation_id for record in records):
@@ -198,6 +200,11 @@ class RoleBindingGuard(WorkerProvider):
         if not isinstance(producer, str) or producer == invocation.correlation_id or not callable(branch):
             return "candidate-custody-unattributable"
         published = WorkerInvocation(invocation.work_identity, producer, invocation.contract_digest)
+        try:  # the PRODUCER's own correlation: every record naming it, whatever work item it is filed under
+            records = (*records, *self._journal.records(work=invocation.work_identity, correlation=producer))
+        except JournalUnreadable:
+            return "candidate-custody-unattributable"
+        records = tuple({json.dumps(record, sort_keys=True): record for record in records}.values())
         outcome = correlated_outcome(records, published, branch(published))
         if outcome is None or outcome.kind != "success" or not _same_candidate(outcome.candidate, candidate):
             return "candidate-custody-unattributable"
@@ -241,7 +248,7 @@ class RoleBindingGuard(WorkerProvider):
         """Retain a conclusively missing terminal result against the original invocation."""
         assert self._journal is not None
         try:
-            records = self._journal.records()
+            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
         except JournalUnreadable:
             return None
         # A begun publication is not a terminal record; whether its effect

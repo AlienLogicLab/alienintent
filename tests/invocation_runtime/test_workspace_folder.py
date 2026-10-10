@@ -87,7 +87,7 @@ def test_every_site_names_the_folder_without_a_colon(tmp_path, monkeypatch):
                 "owner": {"pid": 1, "start": 1, "boot": "b", "pidns": "n"}}
                for role, c in (("producer", CORRELATION), *roles.items())]
     closure._registry, closure._root, closure.worker = SimpleNamespace(ownership=ownership), handover.launch, None
-    closure._journal = SimpleNamespace(records=lambda: started)
+    closure._journal = SimpleNamespace(records=lambda **_: started)
     closure.worker_workspaces, closure.cleanup_diagnostics = handover.workspaces, {}
     closure._git = lambda *args: ""
     landing = closure._clone(roles["closure"])
