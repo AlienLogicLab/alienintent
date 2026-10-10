@@ -632,7 +632,7 @@ class RealWorkerProvider(WorkerProvider):
         """The journaled `closure-ordered` events of this work item and candidate, in journal order."""
         if records is None:
             try:
-                records = self._journal.records() if self._journal is not None else ()
+                records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id) if self._journal is not None else ()
             except JournalUnreadable:
                 records = ()
         return tuple(record for record in records if record.get("event") == CLOSURE_ORDERED
@@ -649,7 +649,7 @@ class RealWorkerProvider(WorkerProvider):
                 or invocation.candidate is None:
             return None
         try:
-            records = self._journal.records()
+            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
         except JournalUnreadable:
             return None
         own = [record for record in records if record.get("correlation_id") == invocation.correlation_id]
@@ -854,7 +854,7 @@ class RealWorkerProvider(WorkerProvider):
         """Why a recovered worktree the coordinator keeps is kept, from this correlation's journal: a journaled
         `missing-terminal-result` outcome, else (no outcome) a parked launch."""
         try:
-            records = self._journal.records() if self._journal is not None else []
+            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id) if self._journal is not None else []
         except JournalUnreadable:
             records = []
         missing = any(record.get("event") == "invocation-outcome" and record.get("kind") == MISSING_TERMINAL_RESULT
@@ -864,7 +864,7 @@ class RealWorkerProvider(WorkerProvider):
     def _owner_pid(self, invocation: WorkerInvocation) -> int | None:
         """The owner process id of the correlation's one `invocation-started` record."""
         try:
-            records = self._journal.records() if self._journal is not None else []
+            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id) if self._journal is not None else []
         except JournalUnreadable:
             records = []
         started = [record for record in records if record.get("event") == "invocation-started"
@@ -887,7 +887,7 @@ class RealWorkerProvider(WorkerProvider):
         if self._journal is None:
             return self._outcomes.get(invocation.correlation_id)
         try:
-            records = self._journal.records()
+            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
         except JournalUnreadable:
             return None
         return correlated_outcome(records, invocation, self._candidate_branch(invocation))
@@ -910,7 +910,7 @@ class RealWorkerProvider(WorkerProvider):
         if self._journal is None or self._ownership is None:
             return answer(OWNER_UNATTESTED)
         try:
-            records = self._journal.records()
+            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
         except JournalUnreadable:
             return answer(OWNER_UNATTESTED)
         own = [record for record in records if record.get("correlation_id") == invocation.correlation_id]

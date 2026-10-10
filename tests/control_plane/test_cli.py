@@ -675,13 +675,116 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
     assert json.loads(capsys.readouterr().out) == {"identity": "ITEM", "answer": "closure-not-automated"}
     assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
     assert json.loads(capsys.readouterr().out) == {"identity": "ITEM", "stop_reason": "dependencies-or-authority-blocked",
-                                                   "dispatched": ["ITEM"], "authority_blocked": [], "failed": []}
+                                                   "dispatched": ["ITEM"], "authority_blocked": [], "failed": [],
+                                                   "ran": []}
     for extra, digest in ((["--contract-digest", "sha256:abc"], "sha256:abc"), ([], None)):
         assert cli.main(["--json", "--profile-factory", "x:y", "work", "context", "ITEM", "--role", "PRODUCER",
                          "--correlation", "launch:ITEM:0", *extra]) == 0
         capsys.readouterr()
     assert calls == [("launch", "ITEM"), ("launch", "ITEM"), ("assemble", "sha256:abc"), ("assemble", None)]
 
+
+
+def test_work_run_renders_the_run_summary_inside_the_card_projector(monkeypatch, capsys, tmp_path) -> None:
+    """BOUNDED-ROUTINE-LAUNCH: `work run` calls the launcher's `run` once, inside the card projector and the launch
+    reservation, with the retry pause, and renders its summary with any projection still owed."""
+    from contextlib import contextmanager
+    from types import SimpleNamespace
+    from alienintent.control_plane.adapters import cli
+    from alienintent.control_plane.application import operator
+    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+    from alienintent.execution_coordination.application.factory_coordinator import RunSummary, StopReason
+    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+    events, store = [], SQLiteOperationalStore(tmp_path / "launch.sqlite")
+
+    def run(pause):
+        events.append(("run", [r.scope for r in store.recovery_reservations("registry")]))
+        pause()
+        return RunSummary(StopReason.EXHAUSTED, ("A",), ran=("A", "A", "A"))
+
+    @contextmanager
+    def projection():
+        events.append("projector on")
+        yield
+        events.append("projector off")
+    launcher = SimpleNamespace(run=run, projection_diagnostics={"A": "A: RuntimeError: x"})
+    registry = SimpleNamespace(launcher=lambda: launcher, store=store, ownership=ProcOwnership(),
+                               card_projection=projection)
+    monkeypatch.setattr(cli, "_factory", lambda _: SimpleNamespace(work_registry=registry))
+    monkeypatch.setattr(cli.time, "sleep", lambda seconds: events.append(("sleep", seconds)))
+
+    assert cli.main(["--json", "--profile-factory", "x:y", "work", "run"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "stop_reason": "eligible-backlog-exhausted", "dispatched": ["A"], "authority_blocked": [], "failed": [],
+        "ran": ["A", "A", "A"], "projection_diagnostics": {"A": "A: RuntimeError: x"}}
+    assert events == ["projector on", ("run", ["launch"]), ("sleep", operator.RETRY_PAUSE_SECONDS), "projector off"]
+    assert store.recovery_reservations("registry") == ()
+
+
+def test_work_run_wait_runs_again_after_each_idle_run_with_no_one_invoking_it(tmp_path) -> None:
+    """`work run --wait`: an idle run (nothing ran, or another launch holds the reservation) waits, then runs again;
+    a run that ran a role is reported and followed at once by the next run."""
+    from types import SimpleNamespace
+    from alienintent.control_plane.application.operator import LAUNCH_IN_PROGRESS, watch_work
+    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+    from alienintent.execution_coordination.application.factory_coordinator import (
+        LAUNCH_KEY, LAUNCH_SCOPE, RunSummary, StopReason)
+    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+    store, ownership = SQLiteOperationalStore(tmp_path / "launch.sqlite"), ProcOwnership()
+    owner = "launcher:" + json.dumps(dict(ownership.current()), sort_keys=True, separators=(",", ":"))
+    held = store.acquire("registry", LAUNCH_SCOPE, LAUNCH_KEY, owner)  # a live launch holds it at first
+    runs = iter([RunSummary(StopReason.EXHAUSTED, ()), RunSummary(StopReason.EXHAUSTED, (), ran=("B",)),
+                 RunSummary(StopReason.EXHAUSTED, ())])
+    reports, events = [], []
+
+    class Stop(Exception):
+        pass
+
+    def sleep(seconds):
+        events.append(("sleep", seconds))
+        if len([event for event in events if event[0] == "sleep"]) == 1:
+            store.release("registry", held.scope, held.key, held.owner, held.fence)
+        if len([event for event in events if event[0] == "sleep"]) == 3:
+            raise Stop()
+
+    def run(pause):
+        events.append(("run",))
+        return next(runs)
+    launcher = SimpleNamespace(run=run, projection_diagnostics={})
+    with pytest.raises(Stop):
+        watch_work(lambda: launcher, store, ownership, 30, reports.append, sleep)
+    assert [report.get("answer") or list(report["ran"]) for report in reports] == [LAUNCH_IN_PROGRESS, ["B"]]
+    assert events == [("sleep", 30), ("run",), ("sleep", 30), ("run",), ("run",), ("sleep", 30)]
+
+
+def test_work_run_wait_survives_a_failed_run_and_runs_again(tmp_path) -> None:
+    """A run that raises (the board unreadable, a store or git error) is reported, waited out and run again: one
+    transient failure never ends the service. The launch reservation is released."""
+    from types import SimpleNamespace
+    from alienintent.control_plane.application.operator import watch_work
+    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+    from alienintent.execution_coordination.application.factory_coordinator import RunSummary, StopReason
+    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+    store = SQLiteOperationalStore(tmp_path / "launch.sqlite")
+    answers = iter([OSError("board unreadable"), RunSummary(StopReason.EXHAUSTED, (), ran=("B",))])
+    reports, waits = [], []
+
+    class Stop(BaseException):
+        pass
+
+    def run(pause):
+        answer = next(answers, None)
+        if answer is None:
+            raise Stop()
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+    with pytest.raises(Stop):
+        watch_work(lambda: SimpleNamespace(run=run, projection_diagnostics={}), store, ProcOwnership(), 30,
+                   reports.append, waits.append)
+    assert reports[0] == {"error": "OSError", "detail": "board unreadable"} and list(reports[1]["ran"]) == ["B"]
+    assert waits == [30]
+    assert store.recovery_reservations("registry") == ()
 
 
 def test_work_launch_runs_inside_the_card_projector_and_work_project_runs_one_pass(monkeypatch, capsys, tmp_path) -> None:

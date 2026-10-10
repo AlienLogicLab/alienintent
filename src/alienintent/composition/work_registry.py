@@ -106,7 +106,7 @@ from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.packet_assessment import fingerprint
 from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason
-from alienintent.context_assembly.application.work_completion import landing_check
+from alienintent.context_assembly.application.work_completion import LANDING_UNVERIFIED, landing_check
 from alienintent.context_assembly.domain.work_context import CLOSURE, PRODUCER, VERIFIER
 from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
 from alienintent.context_assembly.domain.work_identity import DONE, STATES, GitReadFailed, StoredPointer, \
@@ -130,7 +130,8 @@ from alienintent.execution_coordination.adapters.github_work_management import G
 from alienintent.execution_coordination.adapters.release_admission import (
     GitRevisionResolver, StoredReleaseAuthorizations)
 from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED, SCHEMA_VERSION, SQLiteOperationalStore
-from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
+from alienintent.execution_coordination.application.factory_coordinator import (NEVER_STARTED, FactoryCoordinator,
+                                                                                  ProjectionRefused)
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, MutationSpecInvalid, parse_mutations
@@ -592,8 +593,9 @@ class WorkRegistry:
                                   landing_enabled=lambda: configuration.github.landing,
                                   started_item=self._started_item, completed=self._project_completed)
 
-    def _journal_records(self) -> tuple[dict[str, object], ...]:
-        return JsonlInvocationJournal(launch_root(self.configuration) / "invocation-journal.jsonl", time.time).records()
+    def _journal_records(self, work: str, correlation: str | None = None) -> tuple[dict[str, object], ...]:
+        return JsonlInvocationJournal(launch_root(self.configuration) / "invocation-journal.jsonl",
+                                      time.time).records(work=work, correlation=correlation)
 
     def _started_item(self, identity: str, correlation: str) -> ReadyWorkItem | None:
         """A started work item built from its registry record alone (not the board): the row (not retired, with a
@@ -606,7 +608,8 @@ class WorkRegistry:
                     or item.assessment_ref is None:
                 return None
             contract = contract_block(record.packet, item.id)
-            started = [entry for entry in self._journal_records() if entry.get("event") == "invocation-started"
+            started = [entry for entry in self._journal_records(item.id, correlation)
+                       if entry.get("event") == "invocation-started"
                        and entry.get("correlation_id") == correlation and entry.get("work_identity") == item.id]
             if len(started) != 1 or started[0].get("contract_digest") != contract.content_digest:
                 return None
@@ -620,20 +623,24 @@ class WorkRegistry:
     def _project_completed(self, identity: str) -> None:
         """The coordinator's `completed` hook: nothing when the row is already DONE, otherwise
         `record_coordinated` with the last journaled `closure-ordered` event of this item and its custodied
-        candidate (of any correlation). A refusal raises, which the coordinator records as a diagnostic."""
+        candidate (of any correlation). A refusal raises, which the coordinator records as a diagnostic: only
+        LANDING_UNVERIFIED (the landing could not be read yet) may change on a retry; every other refusal is permanent
+        (ProjectionRefused) and settles the DONE."""
         item = self.identities.find(identity)
         if item is None:
-            raise LookupError("no work item")
+            raise ProjectionRefused("no work item")
         if item.state == DONE:
             return
         _, raw = self.store.read_state("registry", f"factory:{identity}")
         held = raw.get("candidate")
         revision = str(held.get("locator", "")).rpartition("@")[2] if isinstance(held, dict) else None
-        orders = [entry for entry in self._journal_records() if entry.get("event") == CLOSURE_ORDERED
+        orders = [entry for entry in self._journal_records(identity) if entry.get("event") == CLOSURE_ORDERED
                   and entry.get("work_identity") == identity and entry.get("candidate") == revision]
         result = self.completion.record_coordinated(identity, orders[-1] if orders else None)
-        if result.answer is not None:
+        if result.answer == LANDING_UNVERIFIED:
             raise RuntimeError(f"{result.answer}: {result.detail}")
+        if result.answer is not None:
+            raise ProjectionRefused(f"{result.answer}: {result.detail}")
 
     def launcher(self) -> FactoryCoordinator:
         """`work launch` (unit 6c-2): `coordinator(worker, artifacts)` with the existing worker chain of
@@ -805,7 +812,8 @@ class WorkRegistry:
         if attested in {OWNER_ALIVE, OWNED_WORK_ACTIVE}:
             return {"answer": OWNER_STILL_RUNNING, "attestation": attested}
         try:
-            records = [record for record in worker.journal.records() if record.get("correlation_id") == correlation]
+            records = [record for record in worker.journal.records(work=identity, correlation=correlation)
+                       if record.get("correlation_id") == correlation]
         except JournalUnreadable:
             return {"answer": START_UNPROVEN, "missing": "a readable invocation journal"}
         if not records:
@@ -1026,7 +1034,8 @@ class WorkRegistry:
             return str(held.get("locator", "")).rpartition("@")[2]
 
         def ordered(correlation: str) -> Mapping[str, object] | None:
-            found = [entry for entry in journal.records() if entry.get("event") == CLOSURE_ORDERED
+            found = [entry for entry in journal.records(correlation=correlation)
+                     if entry.get("event") == CLOSURE_ORDERED
                      and entry.get("correlation_id") == correlation]
             return found[-1] if found else None
 
@@ -1839,14 +1848,15 @@ class RegistryClosure:
                            "actions": list(actions), "request_sha256": digest}}
         try:
             self._journal.append(event)
-            journaled = [entry for entry in self._journal.records() if entry.get("event") == CLOSURE_ORDERED
+            journaled = [entry for entry in self._journal.records(work=identity, correlation=invocation.correlation_id)
+                         if entry.get("event") == CLOSURE_ORDERED
                          and entry.get("correlation_id") == invocation.correlation_id]
         except (JournalUnreadable, OSError):
             journaled = []
         if not journaled or {key: journaled[-1].get(key) for key in event} != event:
             return (), (*findings, hold("order-unrecorded", base, merge, record))
         self._authority.land(self._landing_order(journaled[-1], clone))  # Trusted in neither answer.
-        orders = tuple(entry for entry in self._journal.records() if entry.get("event") == CLOSURE_ORDERED
+        orders = tuple(entry for entry in self._journal.records(work=identity) if entry.get("event") == CLOSURE_ORDERED
                        and entry.get("work_identity") == identity and entry.get("candidate") == revision)
         receipts, settled = self._settle(invocation, candidate, clone, orders, retry=False, earlier=False)
         return receipts, (*findings, *settled)
@@ -1981,8 +1991,8 @@ class RegistryClosure:
         """Every workspace owned by a journaled correlation of this work item, under the ownership checks; the
         running correlation's landing clone last. Anything kept is named in `cleanup_diagnostics`."""
         try:
-            started = [entry for entry in self._journal.records() if entry.get("event") == "invocation-started"
-                       and entry.get("work_identity") == invocation.work_identity]
+            started = [entry for entry in self._journal.records(work=invocation.work_identity)
+                       if entry.get("event") == "invocation-started"]
         except JournalUnreadable:
             self.cleanup_diagnostics[invocation.correlation_id] = "journal unreadable"
             return False

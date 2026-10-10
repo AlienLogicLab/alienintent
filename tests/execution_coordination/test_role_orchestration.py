@@ -191,8 +191,8 @@ class JournalFault:
                     return inner.append(record | {"receipts": [*record["receipts"], "merged-to-baseline"]})
                 raise AssertionError(fault)
 
-            def records(self):
-                return inner.records()
+            def records(self, work=None, correlation=None):
+                return inner.records(work, correlation)
 
         return Journal()
 

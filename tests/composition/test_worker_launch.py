@@ -98,7 +98,7 @@ record = {{"argv": sys.argv, "stdin": text, "env": dict(os.environ), "cwd": os.g
 records.mkdir(exist_ok=True)
 (records / f"{{role}}-{{len(list(records.iterdir()))}}.json").write_text(json.dumps(record))
 if role == "PRODUCER":
-    Path("launch-candidate.txt").write_text("candidate\n")
+    Path("launch-candidate.txt").write_text(f"candidate {{package['identity']}}\n")
     subprocess.run(["git", "add", "launch-candidate.txt"], check=True)
     subprocess.run(["git", "-c", "commit.gpgsign=false", "commit", "-qm", "candidate"], check=True)
     review = lines[next(i for i, line in enumerate(lines) if line.endswith("to this file:")) + 1]

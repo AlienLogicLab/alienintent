@@ -89,6 +89,29 @@ def test_sandbox_profile_refuses_a_verifier_given_a_candidate_the_producer_never
     assert runs(tmp_path) == [("PRODUCER", PRODUCER_0)]
 
 
+def test_a_second_producer_outcome_under_another_work_item_makes_custody_unattributable(tmp_path: Path) -> None:
+    """BOUNDED-ROUTINE-LAUNCH: the guard reads the PRODUCER's correlation itself, so a durable outcome on that
+    correlation filed under another work item still makes the published candidate unattributable."""
+    profile = sandbox(tmp_path)
+    project = profile.work.project_execution_state
+
+    def miscorrelate_at_verify(identity, stage, revision=0):
+        if stage == LifecycleStage.VERIFY:
+            [outcome] = [r for r in journaled(profile.journal.path, "invocation-outcome") if r["correlation_id"] == PRODUCER_0]
+            profile.journal.append({k: v for k, v in outcome.items() if k not in ("sequence", "at")}
+                                   | {"work_identity": "ANOTHER-WORK-ITEM"})
+        return project(identity, stage, revision)
+
+    profile.work.project_execution_state = miscorrelate_at_verify  # type: ignore[method-assign]
+    profile.coordinator.start()
+
+    state = profile.coordinator.state(SANDBOX_WORK)
+    [verifier] = list(profile.worker.refusals)
+    assert state.stage is LifecycleStage.VERIFY
+    _held_before_launch(state, profile.worker.refusals, verifier, "candidate-custody-unattributable")
+    assert runs(tmp_path) == [("PRODUCER", PRODUCER_0)]
+
+
 @pytest.mark.parametrize("binding", ["missing", "disconnected"])
 def test_github_profile_refuses_an_unbound_or_disconnected_worker_before_launch(tmp_path: Path, binding: str) -> None:
     composed = github(tmp_path, binding=binding)
