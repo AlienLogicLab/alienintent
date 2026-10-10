@@ -47,7 +47,9 @@ def plan_at(digest: str, label: str = "FIXTURE") -> PlanAuthority:
                              "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
              "protected_paths": list(PROTECTED),
              "obligations": [{"label": label, "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-                              "allowed_paths": ["src/"]}]}
+                              "allowed_paths": ["src/"], "intent": "Fixture intent.",
+                              "acceptance": [{"id": f"{label}-A1", "text": "The fixture works."}],
+                              "depends_on": [], "satisfied_by": []}]}
     text = f"```json alienintent-plan-authority\n{json.dumps(scope)}\n```\n"
     return PlanAuthority(PLAN_PATH, "c" * 40, digest, "sha256:" + "b" * 64, "Founder", "approved", parse_scope(text))
 
