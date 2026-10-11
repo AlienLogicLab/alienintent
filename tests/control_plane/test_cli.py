@@ -623,6 +623,7 @@ def test_work_context_runs_with_only_the_worker_environment(tmp_path: Path) -> N
     ["work", "authorize", "UNIT", "--commit", "c", "--attempt", "a", "--baseline", "b", "--quote", "q"],
     ["work", "approve-plan", "--commit", "c", "--quote", "q"],
     ["work", "release", "UNIT"],
+    ["work", "prepare"],
     ["work", "record-completed", "UNIT", "--candidate", "c", "--landing", "l", "--record", "r", "--verification", "v",
      "--approval", "a", "--quote", "q"],
     ["work", "link", "UNIT"],
@@ -646,6 +647,24 @@ def test_the_worker_profile_answers_every_other_command_with_the_stated_error(tm
     assert main(["--json", "--profile-factory", WORK_CONTEXT_PROFILE, *argv]) == 1
     assert json.loads(capsys.readouterr().out) == {"error": "not-available-in-worker-profile"}
     assert cx.written() == before
+
+
+def test_work_prepare_runs_one_preparation_and_renders_its_typed_answer(monkeypatch, capsys) -> None:
+    """WORK-PREPARATION-REFILL R3a: `work prepare` calls the registry's Work Preparation once and renders its answer;
+    a registry without one answers the stated error."""
+    from types import SimpleNamespace
+    from alienintent.composition.work_preparation import PreparationResult
+    from alienintent.control_plane.adapters import cli
+    calls = []
+    registry = SimpleNamespace(preparation=SimpleNamespace(prepare_next=lambda: calls.append(1) or PreparationResult(
+        "released", "FIXTURE", "id-1", "")))
+    monkeypatch.setattr(cli, "_factory", lambda path: SimpleNamespace(work_registry=registry))
+    assert cli.main(["--json", "--profile-factory", "x:y", "work", "prepare"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"answer": "released", "obligation": "FIXTURE", "identity": "id-1",
+                                                   "detail": ""} and calls == [1]
+    registry.preparation = None
+    assert cli.main(["--json", "--profile-factory", "x:y", "work", "prepare"]) == 1
+    assert json.loads(capsys.readouterr().out) == {"error": "readiness-not-configured"}
 
 
 # --- unit 6c-2: `work launch` and `work context --contract-digest` ---------------------------------------------------

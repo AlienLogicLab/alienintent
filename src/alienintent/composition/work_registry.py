@@ -67,7 +67,7 @@ Configuration document (JSON):
 """
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
@@ -92,6 +92,7 @@ from alienintent.composition.readiness import assessment_environment, compose_pr
 from alienintent.composition.role_binding import ROLE_OPERATIONS, RoleBindingGuard
 from alienintent.composition.sandbox_run_profile import PROVIDER_DIMENSIONS, worker_environment
 from alienintent.composition.sandbox_profile import APP_KEY_REFERENCE
+from alienintent.composition.work_preparation import WorkerPreparer, WorkPreparation
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
 from alienintent.context_assembly.application.inherited_release import INHERITED_RELEASE, OWNER_DECISION_REQUIRED, \
@@ -107,13 +108,15 @@ from alienintent.context_assembly.application.work_registration import WorkRecor
 from alienintent.context_assembly.domain.baseline_revalidation import (
     ADVANCED, BEHIND, DIVERGED, REPREPARE, BaselineDecision, reference_paths, revalidate)
 from alienintent.context_assembly.domain.packet_assessment import fingerprint
+from alienintent.context_assembly.domain.obligation_state import DerivedItem, ObligationState, obligation_states
+from alienintent.context_assembly.domain.preparation import AcceptanceBlockInvalid, parse_acceptance
 from alienintent.context_assembly.domain.proof_set import ProofSetInvalid, parse_proof
 from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason
 from alienintent.context_assembly.application.work_completion import LANDING_UNVERIFIED, landing_check
 from alienintent.context_assembly.domain.work_context import CLOSURE, PRODUCER, VERIFIER
 from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
 from alienintent.context_assembly.domain.work_identity import DONE, STATES, GitReadFailed, StoredPointer, \
-    WorkIdentityRefused, valid_path
+    WorkIdentityRefused, WorkItem, valid_path
 from alienintent.context_assembly.domain.work_link import REQUIRED_PERMISSIONS, LinkResult, render
 from alienintent.context_assembly.ports.work_item_repository import (
     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
@@ -133,12 +136,13 @@ from alienintent.execution_coordination.adapters.github_work_management import G
 from alienintent.execution_coordination.adapters.release_admission import (
     GitRevisionResolver, StoredReleaseAuthorizations)
 from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED, SCHEMA_VERSION, SQLiteOperationalStore
-from alienintent.execution_coordination.application.factory_coordinator import (NEVER_STARTED, FactoryCoordinator,
-                                                                                  ProjectionRefused)
+from alienintent.execution_coordination.application.factory_coordinator import (
+    FINAL_OUTCOMES, NEVER_STARTED, FactoryCoordinator, ProjectionRefused)
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, MutationSpecInvalid, parse_mutations
-from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH, PlanAuthority, outside_authority
+from alienintent.execution_coordination.domain.plan_authority import (
+    PLAN_PATH, PlanAuthority, PlanScope, Satisfaction, obligation_labels, outside_authority)
 from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
 from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, SCOPE_VIOLATION, contained
 from alienintent.execution_coordination.domain.closure import (
@@ -542,6 +546,8 @@ class WorkRegistry:
             else None
         # `work release`: the control plane's release of plan-derived work, with the READY view's attention items.
         self.release = self._release(configuration) if self.ready_view is not None else None
+        # `work prepare` (WORK-PREPARATION-REFILL R3a): the next plan-derived Work Item, prepared by the PREPARER.
+        self.preparation = WorkPreparation(self, WorkerPreparer(self)) if self.release is not None else None
         # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
         # the configuration file, so a configuration not loaded from a file has none.
         self.context = _work_context(configuration, self.records, self.items, self.assessment.consumer) \
@@ -1230,6 +1236,50 @@ class WorkRegistry:
                 self._fetched_main(self.configuration.packets_repository) is None:
             current = self.plan_approval.current()  # nothing was ever fetched: fetch once
         return None if current is None else current.scope.protected_paths
+
+    def derived_items(self, scope: PlanScope) -> tuple[DerivedItem, ...]:
+        """Every non-retired packet item whose contract references one obligation of `scope`, with its final outcome
+        (DONE, a final coordinator outcome, or None while live) and the acceptance ids its acceptance block names
+        (WORK-PREPARATION-REFILL R3a). An item whose packet or contract cannot be read is not derived from the plan."""
+        labels, items = {obligation.label for obligation in scope.obligations}, []
+        for item in self.identities.packet_items():
+            try:
+                record = self.records.show(item.id)
+                contract = contract_block(record.packet, item.id)
+                satisfies = parse_acceptance(record.packet.decode("utf-8")) or ()
+            except (WorkIdentityRefused, ContractInvalid, AcceptanceBlockInvalid, UnicodeDecodeError, AttributeError):
+                continue
+            referenced = obligation_labels(contract)
+            if len(referenced) != 1 or referenced[0] not in labels:
+                continue
+            raw = self._coordinator_record(item.id)
+            final = "DONE" if self._is_done(item) else \
+                raw.get("outcome") if raw.get("outcome") in FINAL_OUTCOMES else None
+            items.append(DerivedItem(referenced[0], item.id, final, tuple(satisfies)))
+        return tuple(items)
+
+    def mapping_holds(self, entry: Satisfaction) -> bool:
+        """A plan `satisfied_by` entry holds when its work item is DONE and its landed commit is on canonical main as
+        last fetched (WORK-PREPARATION-REFILL R3a)."""
+        item = self.identities.find(entry.work_item)
+        name = self.configuration.packets_repository
+        main = self._fetched_main(name)
+        if item is None or not self._is_done(item) or main is None:
+            return False
+        return bool(_is_ancestor(self.configuration.repositories[name].clone, entry.landed_commit, main))
+
+    def _coordinator_record(self, identity: str) -> dict:
+        _, raw = self.assessment.consumer.store.read_state("registry", f"factory:{identity}")
+        return raw or {}
+
+    def _is_done(self, item: WorkItem) -> bool:
+        """DONE: the row (projected after CLOSURE) or the coordinator record (the canonical lifecycle)."""
+        return item.state == DONE or self._coordinator_record(item.id).get("stage") == "DONE"
+
+    def obligation_states(self, authority: PlanAuthority, stopped: Collection[str] = ()) -> tuple[ObligationState, ...]:
+        """Every obligation's state under `authority` from the registry (R3a): derived items, verified mappings and the
+        obligations Work Preparation stopped."""
+        return obligation_states(authority.scope, self.derived_items(authority.scope), self.mapping_holds, stopped)
 
     def _fetched_authority(self) -> PlanAuthority | None:
         """The plan authority at the last fetched canonical main: a local read that cannot fail transiently, for
