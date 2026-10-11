@@ -1,0 +1,1089 @@
+diff --git a/src/alienintent/composition/work_preparation.py b/src/alienintent/composition/work_preparation.py
+new file mode 100644
+index 0000000..7b5dc61
+--- /dev/null
++++ b/src/alienintent/composition/work_preparation.py
+@@ -0,0 +1,371 @@
++"""Work Preparation: `prepare_next()` prepares, checks, registers, assesses and releases the next plan-derived Work Item
++(WORK-PREPARATION-REFILL R3a; spec 3.3-3.5; WPR-A2).
++
++From the live canonical plan tip (read fresh): select the next eligible obligation (none while a derived item is live);
++check the obligation revision's budget; run the PREPARER (one bounded session given one context package); check its
++packet deterministically before anything is written (`context_assembly.domain.preparation.check_packet` plus the fixed
++closure actions and the mutations block); commit it to the packets branch (git plumbing on the configured packets
++clone, pushed through the one ref publisher), register it, bind its identity, assess it with Agent Ready and, READY,
++release it by inherited release. Typed outcomes, never the Decision Inbox: an Agent Ready CLARIFY gets one PREPARER
++revision of the same item with the findings; a refused packet uses one run and is tried again on the next call; a
++PREPARER CLARIFY or HOLD, an Agent Ready SPLIT or HOLD, a malformed answer or an exhausted budget STOPS the obligation
++with its cause (R4 surfaces a stopped obligation as the READY-supply fault). A real SPLIT and a re-issue after a failed
++execution are WORK-PREPARATION-REFILL R3b; here a SPLIT stops ("cannot safely split yet").
++"""
++from __future__ import annotations
++
++from collections.abc import Callable, Collection
++from dataclasses import asdict, dataclass
++from hashlib import sha256
++import json
++import os
++from pathlib import Path
++import subprocess
++import tempfile
++
++from alienintent.context_assembly.domain.obligation_state import IN_PROGRESS as STATE_IN_PROGRESS, next_obligation
++from alienintent.context_assembly.domain.preparation import PENDING, check_packet
++from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
++from alienintent.context_assembly.ports.work_item_repository import PacketRef
++from alienintent.execution_coordination.domain.closure import is_fixed
++from alienintent.execution_coordination.domain.plan_authority import Obligation, PlanAuthority, PlanScope
++from alienintent.execution_coordination.ports.operational_store import VersionConflict
++from alienintent.invocation_runtime.domain.mutation_spec import MutationSpecInvalid, parse_mutations
++
++# prepare_next's answers.
++RELEASED, NOT_RELEASED, NOTHING, IN_PROGRESS = "released", "not-released", "nothing-eligible", "in-progress"
++REFUSED, STOPPED = "refused", "stopped"
++UNAVAILABLE, NO_AUTHORITY = "canonical-main-unavailable", "no-plan-authority"
++# The PREPARER's answers.
++PACKET, CLARIFY, HOLD = "PACKET", "CLARIFY", "HOLD"
++# One budget per obligation revision: PREPARER runs (decisions sections 38-39, 50).
++BUDGET = 3
++PREPARED_DIRECTORY = "docs/work-units/prepared"
++PREPARER_IDENTITY = {"GIT_AUTHOR_NAME": "AlienIntent Work Preparation",
++                     "GIT_AUTHOR_EMAIL": "work-preparation@alienintent",
++                     "GIT_COMMITTER_NAME": "AlienIntent Work Preparation",
++                     "GIT_COMMITTER_EMAIL": "work-preparation@alienintent"}
++# What the PREPARER is told a packet must hold (spec 3.3); the obligation and the plan come in the context package.
++PACKET_FORMAT = (
++    "One markdown packet: a title; a ```json alienintent-contract``` block (identity PENDING-REGISTRATION, "
++    "release_policy automatic-on, authority_issuer plan-authority:<plan content_digest>, authority_references "
++    "['<plan path> obligation:<LABEL>'], authorized_scope inside the obligation's allowed_paths and outside the "
++    "protected paths, budget within the caps, required_closure_actions exactly candidate-published, merged-to-main, "
++    "landing-record, board-updated, workspaces-cleaned); a ```json alienintent-acceptance``` block "
++    "{\"satisfies\": [the obligation's acceptance ids this item completes]}; a ```json alienintent-proof``` block "
++    "{\"targeted_tests\": [test files]}; "
++    "optionally a ```json alienintent-mutations``` block; and the work, its acceptance checks and its proof in prose.")
++
++
++@dataclass(frozen=True)
++class PreparationResult:
++    answer: str
++    obligation: str | None = None
++    identity: str | None = None
++    detail: str = ""
++
++
++def revision(obligation: Obligation) -> str:
++    """The obligation revision: the digest of its plan entry; a changed entry is a new revision with a new budget."""
++    return "sha256:" + sha256(json.dumps(asdict(obligation), sort_keys=True).encode()).hexdigest()
++
++
++class WorkPreparation:
++    def __init__(self, registry, preparer: Callable[[dict], dict], budget: int = BUDGET) -> None:
++        """`registry` is the composed WorkRegistry; `preparer(context)` runs one PREPARER session and answers its
++        result document ({"answer": PACKET|CLARIFY|HOLD, "packet": text, "reason": text})."""
++        self.registry, self.preparer, self.budget = registry, preparer, budget
++        self.store = registry.assessment.consumer.store
++
++    # --- the budget record ----------------------------------------------------------------------------------------
++
++    def _key(self, obligation: Obligation) -> str:
++        return f"preparation:{obligation.label}:{revision(obligation)}"
++
++    def _read(self, key: str) -> tuple[int, dict]:
++        version, raw = self.store.read_state("registry", key)
++        return version, dict(raw or {"runs": 0, "stopped": False, "cause": "", "identity": None, "latest": ""})
++
++    def _write(self, key: str, version: int, record: dict) -> int:
++        self.store.commit("registry", key, version, record)
++        return version + 1
++
++    def stopped(self, scope: PlanScope) -> frozenset[str]:
++        """The obligations whose current revision Work Preparation stopped."""
++        return frozenset(obligation.label for obligation in scope.obligations
++                         if self._read(self._key(obligation))[1].get("stopped"))
++
++    # --- prepare_next -----------------------------------------------------------------------------------------------
++
++    def prepare_next(self) -> PreparationResult:
++        authority = self.registry.plan_approval.current()
++        if authority is None:
++            return PreparationResult(UNAVAILABLE if getattr(self.registry, "canonical_main_unreadable", False)
++                                     else NO_AUTHORITY)
++        states = self.registry.obligation_states(authority, self.stopped(authority.scope))
++        live = [state.label for state in states if state.status == STATE_IN_PROGRESS]
++        if live:
++            return PreparationResult(IN_PROGRESS, live[0])
++        label = next_obligation(authority.scope, states)
++        if label is None:
++            return PreparationResult(NOTHING)
++        obligation = authority.scope.obligation(label)
++        key = self._key(obligation)
++        version, record = self._read(key)
++        findings: object = None
++        revised = False
++        while True:
++            if record["runs"] >= self.budget:
++                return self._stop(key, version, record, label, "budget-exhausted")
++            record["runs"] += 1
++            version = self._write(key, version, record)
++            answer = self.preparer(self._context(authority, obligation, record, findings))
++            kind = answer.get("answer") if isinstance(answer, dict) else None
++            if kind in (CLARIFY, HOLD):
++                return self._stop(key, version, record, label, f"preparer-{kind.lower()}: {answer.get('reason', '')}")
++            text = answer.get("packet") if kind == PACKET else None
++            if not isinstance(text, str):
++                return self._stop(key, version, record, label, "preparer-answer-malformed")
++            data = text.encode("utf-8")
++            reasons = (*check_packet(data, authority, label), *self._composition_reasons(data))
++            if reasons:
++                record["latest"] = "; ".join(reasons)
++                if record.get("identity"):  # a refused revision: the registered item stops with its obligation
++                    return self._abandon(key, version, record, label, "revision-refused: " + record["latest"])
++                self._write(key, version, record)
++                return PreparationResult(REFUSED, label, None, "; ".join(reasons))
++            identity, commit, bound = self._publish(label, revision(obligation), record, data)
++            record["identity"] = identity
++            version = self._write(key, version, record)
++            try:
++                assessed = self.registry.assessment.assess(identity, (bound, commit))
++                disposition = getattr(assessed, "disposition", None)
++                if disposition == "READY":
++                    released = self.registry.release.release(identity)
++                    if released.answer is not None:
++                        return self._abandon(key, version, record, label, f"not-released: {released.answer}")
++                    # The item is out of preparation: the obligation's next item is a new Work Item (its own
++                    # identity and path); the runs stay with the obligation revision.
++                    record.update(identity=None, path=None, items=[*record.get("items", []), identity])
++                    self._write(key, version, record)
++                    return PreparationResult(RELEASED, label, identity, released.detail or "")
++                if disposition == "CLARIFY" and not revised:  # one PREPARER revision of the same item
++                    findings, revised = self._findings(identity), True
++                    continue
++                cause = f"agent-ready-{(disposition or getattr(assessed, 'reason_code', 'hold')).lower()}"
++            except Exception as error:  # noqa: BLE001 - a failure after registration stops the obligation
++                # (never a live item that blocks every later preparation)
++                cause = f"preparation-failed: {type(error).__name__}: {error}"
++            return self._abandon(key, version, record, label, cause)
++
++    def _abandon(self, key: str, version: int, record: dict, label: str, cause: str) -> PreparationResult:
++        """A registered item that will not be released: retired (so it is never a live item blocking every later
++        preparation) and its obligation STOPPED with the cause."""
++        identity = record.get("identity")
++        if identity:
++            self.registry.identities.retire(identity)
++        return self._stop(key, version, record, label, cause, identity)
++
++    def _stop(self, key: str, version: int, record: dict, label: str, cause: str,
++              identity: str | None = None) -> PreparationResult:
++        record.update(stopped=True, cause=cause)
++        self._write(key, version, record)
++        return PreparationResult(STOPPED, label, identity or record.get("identity"), cause)
++
++    def _context(self, authority: PlanAuthority, obligation: Obligation, record: dict, findings: object) -> dict:
++        prior = [asdict(item) for item in self.registry.derived_items(authority.scope)
++                 if item.obligation == obligation.label]
++        return {"plan": {"path": authority.plan_path, "commit": authority.commit,
++                         "content_digest": authority.content_digest},
++                "obligation": asdict(obligation), "protected_paths": list(authority.scope.protected_paths),
++                "budget_caps": dict(authority.scope.budget_caps), "prior_items": prior,
++                "identity": PENDING, "work_item": record.get("identity"), "findings": findings,
++                "budget": {"runs": record["runs"], "limit": self.budget}, "packet_format": PACKET_FORMAT}
++
++    def _composition_reasons(self, data: bytes) -> tuple[str, ...]:
++        reasons = []
++        try:
++            if not is_fixed(contract_block(data, PENDING).required_closure_actions):
++                reasons.append("required_closure_actions: exactly the five fixed closure actions")
++        except ContractInvalid:
++            pass  # check_packet names it
++        try:
++            parse_mutations(data.decode("utf-8"))
++        except MutationSpecInvalid as error:
++            reasons.append(f"mutations: {error}")
++        return tuple(reasons)
++
++    def _findings(self, identity: str) -> object:
++        """Agent Ready's retained answer for the item's current instructions, given to the PREPARER's revision."""
++        history = self.registry.assessment.consumer.history(identity)
++        return history[-1].get("outcome") if history else None
++
++    # --- the packets branch -------------------------------------------------------------------------------------------
++
++    def _publish(self, label: str, revision_digest: str, record: dict, data: bytes) -> tuple[str, str, bytes]:
++        """Commit the packet (registered once; a revision moves the same item), bind its identity, push; answers
++        (identity, bound commit, bound bytes)."""
++        identity = record.get("identity")
++        # Unique per obligation revision and run; a revision of the same item keeps its registered path.
++        tag = f"{revision_digest.removeprefix('sha256:')[:8]}-{record['runs']}"
++        path = record.get("path") or f"{PREPARED_DIRECTORY}/{label.lower()}-{tag}.md"
++        record["path"] = path
++        if identity is None:
++            commit = self._commit(path, data, f"Prepare {label} (Work Preparation)")
++            item = self.registry.records.register(data, self._repository(), path, commit, f"{label}-{tag}", "BIU",
++                                                  None)
++            if item.pointer is None or item.pointer.commit != commit:  # an existing row, never this packet
++                raise RuntimeError(f"registration returned another item for {path}")
++            identity = item.id
++        bound = data.replace(PENDING.encode(), identity.encode())
++        return identity, self._commit(path, bound, f"Bind {label} to work item {identity[:8]}"), bound
++
++    def _repository(self) -> str:
++        return self.registry.configuration.packets_repository
++
++    def _commit(self, path: str, data: bytes, message: str) -> str:
++        """One commit on the packets branch holding `data` at `path` on top of the remote branch tip (git plumbing in
++        the configured packets clone, with a private index), pushed through the one ref publisher."""
++        location = self.registry.configuration.repositories[self._repository()]
++        clone, branch, remote = Path(location.clone), location.packets_branch, location.remote
++        tip = "refs/alienintent/packets-tip"
++        self._git(clone, {}, "fetch", "-q", remote, f"+refs/heads/{branch}:{tip}")
++        parent = self._git(clone, {}, "rev-parse", "--verify", f"{tip}^{{commit}}")
++        with tempfile.TemporaryDirectory() as folder:
++            index = {"GIT_INDEX_FILE": os.path.join(folder, "index")}
++            self._git(clone, index, "read-tree", parent)
++            blob = self._git(clone, index, "hash-object", "-w", "--stdin", data=data)
++            self._git(clone, index, "update-index", "--add", "--cacheinfo", f"100644,{blob},{path}")
++            tree = self._git(clone, index, "write-tree")
++            commit = self._git(clone, PREPARER_IDENTITY, "commit-tree", tree, "-p", parent, "-m", message)
++        self.registry.publisher.publish(clone, remote, (PacketRef(f"refs/heads/{branch}", commit, False),))
++        # The clone's own packets branch retains the commit for registration (only a fast-forward, never a rewrite).
++        local = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}^{{commit}}"],
++                               cwd=clone, capture_output=True, check=False, timeout=60).stdout.decode().strip()
++        if local and local != parent and subprocess.run(["git", "merge-base", "--is-ancestor", local, commit],
++                                                         cwd=clone, capture_output=True, timeout=60).returncode:
++            raise RuntimeError(f"the local {branch} holds commits the remote packets branch lacks")
++        self._git(clone, {}, "update-ref", f"refs/heads/{branch}", commit, *((local,) if local else ()))
++        return commit
++
++    @staticmethod
++    def _git(clone: Path, extra: dict, *args: str, data: bytes | None = None) -> str:
++        result = subprocess.run(["git", "-c", "core.hooksPath=/dev/null", *args], cwd=clone, input=data,
++                                capture_output=True, check=False, timeout=300, env=os.environ | extra)
++        if result.returncode:
++            raise RuntimeError(f"git {args[0]} failed: {result.stderr.decode(errors='replace').strip()[:200]}")
++        return result.stdout.decode().strip()
++
++
++# --- the production PREPARER session ---------------------------------------------------------------------------------
++
++PREPARER_ROLE, PREPARATION_RESULT = "PREPARER", "preparation.json"
++PREPARER_WALL_CLOCK = 1800
++RESULT_LIMIT = 1 << 20
++PREPARER_INSTRUCTIONS = """You are the PREPARER for AlienIntent Work Preparation. Your current working directory is a
++read-only clone of current canonical main. Prepare exactly one bounded Work Item for the obligation in the context
++package below, from the plan's intent and acceptance only: never invent intent, broaden authority, touch a protected
++path, change priority or dependencies, weaken acceptance or resolve an owner ambiguity. Use the supplied context first;
++inspect only the files and tests the obligation's paths and acceptance name (no broad repository exploration).
++
++When the context names `findings`, revise the packet for the same Work Item with them. When the context names
++`prior_items`, do not repeat work they already did.
++
++Write exactly one JSON file to this path and nothing else:
++{result}
++with either {{"answer": "PACKET", "packet": "<the whole packet markdown>"}} or
++{{"answer": "CLARIFY" or "HOLD", "reason": "<the missing information, named>"}}.
++
++Packet format: {packet_format}
++
++Context package:
++{context}
++"""
++
++
++class WorkerPreparer:
++    """One PREPARER session (WORK-PREPARATION-REFILL R3a): a fresh clone of current canonical main, the provider command
++    of the `PREPARER` route with the instructions on standard input, run as the worker user when one is configured (as
++    every role is), and the result document read back from the worker's own results folder by a checked descriptor;
++    the clone is cleaned up. Any failure answers a typed HOLD, so Work Preparation stops the obligation as a fault."""
++
++    def __init__(self, registry) -> None:
++        self.registry = registry
++
++    def __call__(self, context: dict) -> dict:
++        from uuid import uuid4
++        from alienintent.composition import work_registry as composed
++        from alienintent.composition.model_routing import provider_command, resolve_route
++        configuration = self.registry.configuration
++        name = configuration.packets_repository
++        main = self.registry._canonical_main(name)
++        if main is None:
++            return {"answer": HOLD, "reason": "canonical main could not be fetched"}
++        invocation = f"prepare-{uuid4().hex}"
++        root, user = composed.launch_root(configuration), configuration.worker_user
++        try:
++            route = resolve_route(PREPARER_ROLE)
++            if user is None:
++                return self._local(context, invocation, main, root, route, provider_command)
++            return self._as_worker(context, invocation, main, root, user, route, provider_command, composed)
++        except Exception as error:  # noqa: BLE001 - a session that could not run is a typed hold, never a crash
++            return {"answer": HOLD, "reason": f"the PREPARER session failed: {type(error).__name__}: {error}"}
++
++    @staticmethod
++    def _instructions(context: dict, result: Path) -> bytes:
++        return PREPARER_INSTRUCTIONS.format(result=result, packet_format=PACKET_FORMAT,
++                                            context=json.dumps(context, indent=1, sort_keys=True)).encode()
++
++    def _as_worker(self, context, invocation, main, root, user, route, provider_command, composed) -> dict:
++        from alienintent.invocation_runtime.adapters.cli_worker import run_as_worker
++        from alienintent.invocation_runtime.adapters.git_source_control import open_worker_file, read_descriptor
++        from alienintent.invocation_runtime.adapters.git_worktree import WorkerCloneAdapter
++        from alienintent.composition.sandbox_run_profile import worker_environment
++        packets = self.registry.configuration.repositories[self.registry.configuration.packets_repository]
++        worker_root, results = root / "worker", root / "results"
++        environment = worker_environment(root) | {"HOME": str(worker_root / "home"), "TMPDIR": str(worker_root / "tmp"),
++                                                  "CODEX_HOME": str(worker_root / "auth" / "codex"),
++                                                  "USER": user, "LOGNAME": user}
++        if route.get("provider") != composed.WORKER_PROVIDER:
++            return {"answer": HOLD, "reason": f"worker provider unsupported: {route.get('provider')}"}
++        if not composed.worker_login_present(user, environment, Path(environment["CODEX_HOME"])):
++            return {"answer": HOLD, "reason": "worker provider login missing"}
++        clones = WorkerCloneAdapter(Path(packets.clone), worker_root, results, user, environment)
++        workspace = clones.allocate(invocation, f"preparation:{invocation}", main)
++        try:
++            composed.prepare_worker_session(user, environment, Path(packets.clone), root / "intake.git")
++            result = results / invocation / PREPARATION_RESULT
++            run_as_worker(user, environment, provider_command(route, workspace.path), cwd=workspace.path,
++                          input=self._instructions(context, result), timeout=PREPARER_WALL_CLOCK)
++            descriptor = open_worker_file(result, composed.worker_uid(user))
++            try:
++                return self._answer(read_descriptor(descriptor, RESULT_LIMIT))
++            finally:
++                os.close(descriptor)
++        finally:
++            clones.cleanup(workspace, None)
++
++    def _local(self, context, invocation, main, root, route, provider_command) -> dict:
++        """No worker user (a development profile): the same session as the operator, in a detached worktree."""
++        packets = self.registry.configuration.repositories[self.registry.configuration.packets_repository]
++        workspace, result = root / "preparation" / invocation, root / "preparation" / f"{invocation}.json"
++        workspace.parent.mkdir(parents=True, exist_ok=True)
++        subprocess.run(["git", "worktree", "add", "-q", "--detach", str(workspace), main], cwd=packets.clone,
++                       check=True, capture_output=True, timeout=300)
++        try:
++            subprocess.run(provider_command(route, workspace), cwd=workspace, input=self._instructions(context, result),
++                           capture_output=True, check=False, timeout=PREPARER_WALL_CLOCK)
++            return self._answer(result.read_bytes()[:RESULT_LIMIT])
++        finally:
++            subprocess.run(["git", "worktree", "remove", "--force", str(workspace)], cwd=packets.clone,
++                           capture_output=True, check=False, timeout=300)
++
++    @staticmethod
++    def _answer(data: bytes) -> dict:
++        try:
++            document = json.loads(data.decode("utf-8"))
++        except (UnicodeDecodeError, ValueError):
++            return {"answer": HOLD, "reason": "the PREPARER's result is not JSON"}
++        if not isinstance(document, dict):
++            return {"answer": HOLD, "reason": "the PREPARER's result is not an object"}
++        return document
+diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
+index ab21d85..0913dd2 100644
+--- a/src/alienintent/composition/work_registry.py
++++ b/src/alienintent/composition/work_registry.py
+@@ -67,7 +67,7 @@ Configuration document (JSON):
+ """
+ from __future__ import annotations
+ 
+-from collections.abc import Callable, Iterator, Mapping, Sequence
++from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
+ from contextlib import AbstractContextManager, contextmanager
+ from dataclasses import asdict, dataclass, replace
+ from datetime import UTC, datetime
+@@ -92,6 +92,7 @@ from alienintent.composition.readiness import assessment_environment, compose_pr
+ from alienintent.composition.role_binding import ROLE_OPERATIONS, RoleBindingGuard
+ from alienintent.composition.sandbox_run_profile import PROVIDER_DIMENSIONS, worker_environment
+ from alienintent.composition.sandbox_profile import APP_KEY_REFERENCE
++from alienintent.composition.work_preparation import WorkerPreparer, WorkPreparation
+ from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
+ from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
+ from alienintent.context_assembly.application.inherited_release import INHERITED_RELEASE, OWNER_DECISION_REQUIRED, \
+@@ -107,13 +108,15 @@ from alienintent.context_assembly.application.work_registration import WorkRecor
+ from alienintent.context_assembly.domain.baseline_revalidation import (
+     ADVANCED, BEHIND, DIVERGED, REPREPARE, BaselineDecision, reference_paths, revalidate)
+ from alienintent.context_assembly.domain.packet_assessment import fingerprint
++from alienintent.context_assembly.domain.obligation_state import DerivedItem, ObligationState, obligation_states
++from alienintent.context_assembly.domain.preparation import AcceptanceBlockInvalid, parse_acceptance
+ from alienintent.context_assembly.domain.proof_set import ProofSetInvalid, parse_proof
+ from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason
+ from alienintent.context_assembly.application.work_completion import LANDING_UNVERIFIED, landing_check
+ from alienintent.context_assembly.domain.work_context import CLOSURE, PRODUCER, VERIFIER
+ from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
+ from alienintent.context_assembly.domain.work_identity import DONE, STATES, GitReadFailed, StoredPointer, \
+-    WorkIdentityRefused, valid_path
++    WorkIdentityRefused, WorkItem, valid_path
+ from alienintent.context_assembly.domain.work_link import REQUIRED_PERMISSIONS, LinkResult, render
+ from alienintent.context_assembly.ports.work_item_repository import (
+     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
+@@ -133,12 +136,13 @@ from alienintent.execution_coordination.adapters.github_work_management import G
+ from alienintent.execution_coordination.adapters.release_admission import (
+     GitRevisionResolver, StoredReleaseAuthorizations)
+ from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED, SCHEMA_VERSION, SQLiteOperationalStore
+-from alienintent.execution_coordination.application.factory_coordinator import (NEVER_STARTED, FactoryCoordinator,
+-                                                                                  ProjectionRefused)
++from alienintent.execution_coordination.application.factory_coordinator import (
++    FINAL_OUTCOMES, NEVER_STARTED, FactoryCoordinator, ProjectionRefused)
+ from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+ from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+ from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, MutationSpecInvalid, parse_mutations
+-from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH, PlanAuthority, outside_authority
++from alienintent.execution_coordination.domain.plan_authority import (
++    PLAN_PATH, PlanAuthority, PlanScope, Satisfaction, obligation_labels, outside_authority)
+ from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
+ from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, SCOPE_VIOLATION, contained
+ from alienintent.execution_coordination.domain.closure import (
+@@ -542,6 +546,8 @@ class WorkRegistry:
+             else None
+         # `work release`: the control plane's release of plan-derived work, with the READY view's attention items.
+         self.release = self._release(configuration) if self.ready_view is not None else None
++        # `work prepare` (WORK-PREPARATION-REFILL R3a): the next plan-derived Work Item, prepared by the PREPARER.
++        self.preparation = WorkPreparation(self, WorkerPreparer(self)) if self.release is not None else None
+         # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
+         # the configuration file, so a configuration not loaded from a file has none.
+         self.context = _work_context(configuration, self.records, self.items, self.assessment.consumer) \
+@@ -1231,6 +1237,50 @@ class WorkRegistry:
+             current = self.plan_approval.current()  # nothing was ever fetched: fetch once
+         return None if current is None else current.scope.protected_paths
+ 
++    def derived_items(self, scope: PlanScope) -> tuple[DerivedItem, ...]:
++        """Every non-retired packet item whose contract references one obligation of `scope`, with its final outcome
++        (DONE, a final coordinator outcome, or None while live) and the acceptance ids its acceptance block names
++        (WORK-PREPARATION-REFILL R3a). An item whose packet or contract cannot be read is not derived from the plan."""
++        labels, items = {obligation.label for obligation in scope.obligations}, []
++        for item in self.identities.packet_items():
++            try:
++                record = self.records.show(item.id)
++                contract = contract_block(record.packet, item.id)
++                satisfies = parse_acceptance(record.packet.decode("utf-8")) or ()
++            except (WorkIdentityRefused, ContractInvalid, AcceptanceBlockInvalid, UnicodeDecodeError, AttributeError):
++                continue
++            referenced = obligation_labels(contract)
++            if len(referenced) != 1 or referenced[0] not in labels:
++                continue
++            raw = self._coordinator_record(item.id)
++            final = "DONE" if self._is_done(item) else \
++                raw.get("outcome") if raw.get("outcome") in FINAL_OUTCOMES else None
++            items.append(DerivedItem(referenced[0], item.id, final, tuple(satisfies)))
++        return tuple(items)
++
++    def mapping_holds(self, entry: Satisfaction) -> bool:
++        """A plan `satisfied_by` entry holds when its work item is DONE and its landed commit is on canonical main as
++        last fetched (WORK-PREPARATION-REFILL R3a)."""
++        item = self.identities.find(entry.work_item)
++        name = self.configuration.packets_repository
++        main = self._fetched_main(name)
++        if item is None or not self._is_done(item) or main is None:
++            return False
++        return bool(_is_ancestor(self.configuration.repositories[name].clone, entry.landed_commit, main))
++
++    def _coordinator_record(self, identity: str) -> dict:
++        _, raw = self.assessment.consumer.store.read_state("registry", f"factory:{identity}")
++        return raw or {}
++
++    def _is_done(self, item: WorkItem) -> bool:
++        """DONE: the row (projected after CLOSURE) or the coordinator record (the canonical lifecycle)."""
++        return item.state == DONE or self._coordinator_record(item.id).get("stage") == "DONE"
++
++    def obligation_states(self, authority: PlanAuthority, stopped: Collection[str] = ()) -> tuple[ObligationState, ...]:
++        """Every obligation's state under `authority` from the registry (R3a): derived items, verified mappings and the
++        obligations Work Preparation stopped."""
++        return obligation_states(authority.scope, self.derived_items(authority.scope), self.mapping_holds, stopped)
++
+     def _fetched_authority(self) -> PlanAuthority | None:
+         """The plan authority at the last fetched canonical main: a local read that cannot fail transiently, for
+         eligibility only (the READY snapshot, a started item). Nothing it answers releases, starts or lands work: a
+diff --git a/src/alienintent/context_assembly/adapters/work_item_repository.py b/src/alienintent/context_assembly/adapters/work_item_repository.py
+index f4648cd..fe4ba20 100644
+--- a/src/alienintent/context_assembly/adapters/work_item_repository.py
++++ b/src/alienintent/context_assembly/adapters/work_item_repository.py
+@@ -229,6 +229,10 @@ class SQLiteWorkItemRepository(WorkItemRepository):
+         """Explicit parent links only; a family grows by authorized splits, never by a loop."""
+         return tuple(self._rows("parent_id = ? ORDER BY created_at, id", (identity,)))
+ 
++    def packet_items(self) -> tuple[WorkItem, ...]:
++        """Every non-retired item registered from a packet, oldest first (Work Preparation's obligation state)."""
++        return tuple(self._rows("retired_at IS NULL AND request_ref LIKE 'packet:%' ORDER BY created_at, id", ()))
++
+     def _by_id(self, identity: str) -> WorkItem:
+         rows = self._rows("id = ?", (identity,))
+         if not rows:
+diff --git a/src/alienintent/context_assembly/application/work_identity_service.py b/src/alienintent/context_assembly/application/work_identity_service.py
+index b80bce6..44e42ff 100644
+--- a/src/alienintent/context_assembly/application/work_identity_service.py
++++ b/src/alienintent/context_assembly/application/work_identity_service.py
+@@ -76,6 +76,10 @@ class WorkIdentityService:
+     def find(self, id_or_label: str) -> WorkItem | None:
+         return self.items.find(id_or_label)
+ 
++    def packet_items(self) -> tuple[WorkItem, ...]:
++        """Every non-retired item registered from a packet, oldest first."""
++        return self.items.packet_items()
++
+     def children(self, identity: str) -> tuple[WorkItem, ...]:
+         return self.items.children(identity)
+ 
+diff --git a/src/alienintent/context_assembly/domain/preparation.py b/src/alienintent/context_assembly/domain/preparation.py
+new file mode 100644
+index 0000000..f6c5a88
+--- /dev/null
++++ b/src/alienintent/context_assembly/domain/preparation.py
+@@ -0,0 +1,88 @@
++"""Work Preparation's deterministic check of a PREPARER packet (WORK-PREPARATION-REFILL R3a, spec 3.3-3.4). Pure.
++
++WPR-A2: "the control plane refuses any packet outside the obligation's authority before anything is written". A packet
++the PREPARER prepares for obligation <LABEL> passes only when its contract parses under the pending identity; names
++exactly that obligation (`<plan> obligation:<LABEL>`); is issued by exactly the live tip (`plan-authority:<digest>`);
++is `automatic-on`; is inside the live authority (`outside_authority` is empty: repositories, capabilities,
++requirement ids, budget caps, scope inside the obligation's paths and outside protected paths); declares in its
++```json alienintent-acceptance``` block a non-empty set of the obligation's own acceptance ids (the acceptance text
++stays the plan's: the packet names ids, never restates them); and declares its targeted proof set. The checks that
++need other contexts (the fixed closure actions, the mutations block) run in the composition.
++"""
++from __future__ import annotations
++
++import json
++
++from alienintent.context_assembly.domain.proof_set import ProofSetInvalid, parse_proof
++from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
++from alienintent.execution_coordination.domain.plan_authority import (
++    ISSUER_PREFIX, PlanAuthority, obligation_labels, outside_authority)
++
++# The identity a prepared packet carries until it is registered and bound.
++PENDING = "PENDING-REGISTRATION"
++OPEN, CLOSE = "```json alienintent-acceptance", "```"
++
++
++class AcceptanceBlockInvalid(ValueError):
++    """The packet holds more than one, or a malformed, acceptance block."""
++
++
++def parse_acceptance(text: str) -> tuple[str, ...] | None:
++    """The acceptance ids the packet's one acceptance block says it satisfies; None without a block;
++    AcceptanceBlockInvalid for more than one, an unclosed or a malformed block (exactly `satisfies`, a non-empty list
++    of distinct strings)."""
++    lines = text.split("\n")
++    opens = [index for index, line in enumerate(lines) if line == OPEN]
++    if not opens:
++        return None
++    if len(opens) > 1:
++        raise AcceptanceBlockInvalid("more than one acceptance block")
++    close = next((index for index in range(opens[0] + 1, len(lines)) if lines[index] == CLOSE), None)
++    if close is None:
++        raise AcceptanceBlockInvalid("the acceptance block is not closed")
++    try:
++        document = json.loads("\n".join(lines[opens[0] + 1:close]))
++    except ValueError as error:
++        raise AcceptanceBlockInvalid(f"the acceptance block is not JSON: {error}") from None
++    ids = document.get("satisfies") if isinstance(document, dict) and set(document) == {"satisfies"} else None
++    if not isinstance(ids, list) or not ids or not all(isinstance(i, str) and i for i in ids) \
++            or len(set(ids)) != len(ids):
++        raise AcceptanceBlockInvalid("satisfies must be a non-empty list of distinct acceptance ids")
++    return tuple(ids)
++
++
++def check_packet(packet: bytes, authority: PlanAuthority, label: str) -> tuple[str, ...]:
++    """Every reason the packet prepared for obligation `label` is refused under the live `authority`; empty when it
++    passes. Nothing is written either way."""
++    obligation = authority.scope.obligation(label)
++    if obligation is None:
++        return (f"obligation: {label} is not in the plan at the live tip",)
++    try:
++        contract = contract_block(packet, PENDING)
++    except ContractInvalid as error:
++        return (f"contract: {error}",)
++    reasons = []
++    if obligation_labels(contract) != (label,):
++        reasons.append(f"obligation: the packet must reference exactly obligation {label}")
++    if contract.authority_issuer != ISSUER_PREFIX + authority.content_digest:
++        reasons.append(f"issuer: must be {ISSUER_PREFIX}{authority.content_digest}, the live tip")
++    if contract.release_policy != "automatic-on":
++        reasons.append("release_policy: a prepared item is automatic-on")
++    reasons.extend(outside_authority(contract, authority))
++    text = packet.decode("utf-8")
++    try:
++        satisfies = parse_acceptance(text)
++    except AcceptanceBlockInvalid as error:
++        reasons.append(f"acceptance: {error}")
++    else:
++        own = {acceptance.id for acceptance in obligation.acceptance}
++        if satisfies is None:
++            reasons.append("acceptance: the packet declares no acceptance block")
++        elif not set(satisfies) <= own:
++            reasons.append(f"acceptance: not obligation {label}'s ids: {', '.join(sorted(set(satisfies) - own))}")
++    try:
++        if parse_proof(text) is None:
++            reasons.append("proof: the packet declares no targeted proof set")
++    except ProofSetInvalid as error:
++        reasons.append(f"proof: {error}")
++    return tuple(reasons)
+diff --git a/src/alienintent/context_assembly/ports/work_item_repository.py b/src/alienintent/context_assembly/ports/work_item_repository.py
+index 9312351..fd5cad1 100644
+--- a/src/alienintent/context_assembly/ports/work_item_repository.py
++++ b/src/alienintent/context_assembly/ports/work_item_repository.py
+@@ -96,6 +96,8 @@ class WorkItemRepository(Protocol):
+ 
+     def children(self, identity: str) -> tuple[WorkItem, ...]: ...
+ 
++    def packet_items(self) -> tuple[WorkItem, ...]: ...
++
+     def set_evidence(self, identity: str, which: str, ref: EvidenceRef) -> WorkItem: ...
+ 
+     def set_state(self, identity: str, state: str) -> WorkItem: ...
+diff --git a/src/alienintent/control_plane/adapters/cli.py b/src/alienintent/control_plane/adapters/cli.py
+index 98e669b..e18f845 100644
+--- a/src/alienintent/control_plane/adapters/cli.py
++++ b/src/alienintent/control_plane/adapters/cli.py
+@@ -16,6 +16,7 @@ from alienintent.control_plane.application.operator import (
+     NOT_AVAILABLE_IN_WORKER_PROFILE, NOT_IN_EXPORT, RETRY_PAUSE_SECONDS, OperatorControlPlane, OperatorDenied,
+     approve_plan_work, assess_work, authorize_work, context_work,
+     decide_work, display_work, exclusive_launch_work, exclusive_run_work, import_work, link_work, migrate_work,
++    prepare_work,
+     record_completed_work, watch_work,
+     register_work, release_work, show_work)
+ from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
+@@ -116,6 +117,7 @@ def _parser() -> argparse.ArgumentParser:
+     for name in ("commit", "quote"):
+         approve_plan.add_argument("--" + name, required=True)
+     release = _sanitized(work.add_parser("release")); release.add_argument("target")
++    _sanitized(work.add_parser("prepare"))
+     completed = _sanitized(work.add_parser("record-completed")); completed.add_argument("target")
+     for name in ("candidate", "landing", "record", "approval", "quote"):
+         completed.add_argument("--" + name, required=True)
+@@ -266,6 +268,12 @@ def main(argv: list[str] | None = None) -> int:
+                     return 1
+                 _render(approve_plan_work(registry.plan_approval, args.commit, args.quote), args.json)
+                 return 0
++            if args.work_command == "prepare":
++                if getattr(registry, "preparation", None) is None:
++                    _render({"error": "readiness-not-configured"}, args.json)
++                    return 1
++                _render(prepare_work(registry.preparation), args.json)
++                return 0
+             if args.work_command == "release":
+                 if getattr(registry, "release", None) is None:
+                     _render({"error": "readiness-not-configured"}, args.json)
+diff --git a/src/alienintent/control_plane/application/operator.py b/src/alienintent/control_plane/application/operator.py
+index cc0d74a..f963eb4 100644
+--- a/src/alienintent/control_plane/application/operator.py
++++ b/src/alienintent/control_plane/application/operator.py
+@@ -127,6 +127,16 @@ class InheritedReleases(Protocol):
+     def release(self, id_or_label: str) -> Any: ...
+ 
+ 
++class WorkPreparations(Protocol):
++    def prepare_next(self) -> object: ...
++
++
++def prepare_work(preparation: WorkPreparations) -> dict[str, object]:
++    """`work prepare`: one Work Preparation of the next eligible plan obligation (WORK-PREPARATION-REFILL R3a); its
++    typed answer (released, refused, stopped, nothing-eligible, in-progress, ...) as the read answer."""
++    return asdict(preparation.prepare_next())
++
++
+ def release_work(release: InheritedReleases, id_or_label: str) -> dict[str, object]:
+     """`work release`: the plan-derived item's evidence reference, release record and card, or a refusal returned as
+     the read answer naming its code. No Founder words: the authority is the current approved plan's."""
+diff --git a/tests/composition/test_work_preparation.py b/tests/composition/test_work_preparation.py
+new file mode 100644
+index 0000000..6af2a8c
+--- /dev/null
++++ b/tests/composition/test_work_preparation.py
+@@ -0,0 +1,189 @@
++"""Work Preparation's `prepare_next` (WORK-PREPARATION-REFILL R3a, spec 3.3-3.5; WPR-A2) on the composed registry over
++a fixture project, with a fake PREPARER. Plans, packets and answers are TEST DATA."""
++from __future__ import annotations
++
++import json
++
++import pytest
++
++from alienintent.composition.work_preparation import (
++    IN_PROGRESS, NOTHING, REFUSED, RELEASED, STOPPED, WorkPreparation)
++from alienintent.context_assembly.domain.preparation import PENDING
++from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
++from tests.composition.test_work_registry import PlanBoard
++from tests.context_assembly.test_initial_compilation import git
++from tests.context_assembly.test_work_contract import satisfiable_payload
++
++PACKETS = "alienintent/work-packets"
++
++
++@pytest.fixture
++def board(tmp_path) -> PlanBoard:
++    board = PlanBoard(tmp_path / "fx")
++    board.digest = board.approve()
++    git(board.clone, "push", "-q", "origin", f"main:refs/heads/{PACKETS}")  # the packets branch, as in production
++    return board
++
++
++def packet(board, *, scope=("src/alienintent/composition/fixture.py",), satisfies=("FIXTURE-A1",)) -> str:
++    payload = satisfiable_payload(PENDING, release_policy="automatic-on",
++                                  authority_issuer="plan-authority:" + board.digest,
++                                  authority_references=[f"{PLAN_PATH} obligation:FIXTURE"],
++                                  authorized_scope=list(scope))
++    proof = {"targeted_tests": ["tests/composition/test_fixture.py"]}
++    return (f"# Work unit: prepared for FIXTURE\n\n```json alienintent-contract\n{json.dumps(payload, indent=1)}\n"
++            f"```\n\n```json alienintent-acceptance\n{json.dumps({'satisfies': list(satisfies)})}\n```\n\n"
++            f"```json alienintent-proof\n{json.dumps(proof)}\n```\n")
++
++
++class Preparer:
++    """A fake PREPARER answering from `answers` in order; it records each context package it was given."""
++
++    def __init__(self, *answers) -> None:
++        self.answers, self.contexts = list(answers), []
++
++    def __call__(self, context: dict) -> dict:
++        self.contexts.append(context)
++        answer = self.answers.pop(0)
++        return answer(context) if callable(answer) else answer
++
++
++def service(board, preparer) -> WorkPreparation:
++    return WorkPreparation(board.loaded(), preparer)
++
++
++def test_a_valid_packet_is_committed_registered_bound_assessed_and_released_with_provenance(board):
++    preparer = Preparer({"answer": "PACKET", "packet": packet(board)})
++    result = service(board, preparer).prepare_next()
++    assert (result.answer, result.obligation) == (RELEASED, "FIXTURE")
++    registry = board.loaded()
++    item = registry.identities.find(result.identity)
++    assert item.label.startswith("FIXTURE-") and item.label.endswith("-1") and item.state == "CAPTURE"
++    record = registry.records.show(item.id)
++    assert f'"identity": "{item.id}"' in record.packet.decode() and PENDING not in record.packet.decode()
++    assert git(board.root / "remote.git", "merge-base", "--is-ancestor", item.pointer.commit,
++               f"refs/heads/{PACKETS}").decode() == ""
++    release = registry.assessment.authorizations.release_authorization(item.id)
++    assert release.text.startswith("inherited from plan authority " + board.digest)
++    context = preparer.contexts[0]
++    assert (context["plan"]["content_digest"], context["obligation"]["label"]) == (board.digest, "FIXTURE")
++    assert context["identity"] == PENDING and context["budget"] == {"runs": 1, "limit": 3}
++
++
++def test_a_refused_packet_writes_nothing_and_uses_one_run(board):
++    before = board.loaded().identities.packet_items()
++    preparer = Preparer({"answer": "PACKET", "packet": packet(board, scope=("outside/x.py",))})
++    result = service(board, preparer).prepare_next()
++    assert result.answer == REFUSED and "authorized_scope" in result.detail
++    assert board.loaded().identities.packet_items() == before
++
++
++def test_a_preparer_hold_stops_the_obligation_and_it_is_not_prepared_again(board):
++    preparer = Preparer({"answer": "HOLD", "reason": "the obligation names no testable behaviour"})
++    result = service(board, preparer).prepare_next()
++    assert (result.answer, result.obligation) == (STOPPED, "FIXTURE") and "preparer-hold" in result.detail
++    again = Preparer()
++    assert service(board, again).prepare_next().answer == NOTHING and again.contexts == []
++
++
++def test_an_agent_ready_clarify_gets_one_preparer_revision_of_the_same_item(board):
++    def revise(context):
++        assert context["findings"] and context["identity"] == PENDING and context["work_item"]  # the same item
++        board.answer.write_text("READY")
++        return {"answer": "PACKET", "packet": packet(board) + "\nRevised: the acceptance check names its test.\n"}
++    board.answer.write_text("CLARIFY")
++    preparer = Preparer({"answer": "PACKET", "packet": packet(board)}, revise)
++    result = service(board, preparer).prepare_next()
++    assert result.answer == RELEASED and len(preparer.contexts) == 2
++    prepared = [i.label for i in board.loaded().identities.packet_items() if i.label.startswith("FIXTURE-")]
++    assert len(prepared) == 1 and prepared[0].endswith("-1")
++
++
++def test_three_refused_packets_exhaust_the_obligation_budget_and_stop_it(board):
++    refused = {"answer": "PACKET", "packet": packet(board, satisfies=("OTHER-A1",))}
++    for expected in (REFUSED, REFUSED, REFUSED):
++        assert service(board, Preparer(refused)).prepare_next().answer == expected
++    result = service(board, Preparer()).prepare_next()
++    assert result.answer == STOPPED and "budget-exhausted" in result.detail
++
++
++def test_while_a_derived_item_is_live_nothing_is_prepared(board):
++    assert service(board, Preparer({"answer": "PACKET", "packet": packet(board)})).prepare_next().answer == RELEASED
++    idle = Preparer()
++    assert service(board, idle).prepare_next().answer == IN_PROGRESS and idle.contexts == []
++
++
++def test_the_next_item_of_an_obligation_is_a_new_work_item_with_its_own_identity(board):
++    """The first released item is retired unfinished, so the obligation is eligible again: its next item is a new
++    Work Item, never a re-bind of the earlier one."""
++    first = service(board, Preparer({"answer": "PACKET", "packet": packet(board)})).prepare_next()
++    board.loaded().identities.retire(first.identity)
++    second = service(board, Preparer({"answer": "PACKET", "packet": packet(board)})).prepare_next()
++    assert second.answer == RELEASED and second.identity != first.identity
++    assert board.loaded().identities.find(second.identity).label.endswith("-2")
++
++
++def test_the_preparer_session_gets_its_instructions_on_stdin_and_its_result_is_read_back(board, tmp_path, monkeypatch):
++    """The production runner (no worker user: a development profile): the PREPARER route's provider command runs in a
++    detached clone of canonical main with the instructions on standard input; the one result file it names is read
++    back, and the clone is removed."""
++    import sys
++    from alienintent.composition.work_preparation import WorkerPreparer
++    fake = tmp_path / "fake-codex"
++    fake.write_text(f"""#!{sys.executable}
++import json, os, re, sys
++text = sys.stdin.read()
++result = re.search(r"Write exactly one JSON file to this path and nothing else:\\n(\\S+)", text).group(1)
++label = json.loads(text.split("Context package:\\n", 1)[1])["obligation"]["label"]
++reason = "cwd " + os.path.basename(os.getcwd()) + " obligation " + label
++open(result, "w").write(json.dumps({{"answer": "HOLD", "reason": reason}}))
++""")
++    fake.chmod(0o755)
++    routing = tmp_path / "routing.json"
++    routing.write_text(json.dumps({"schemaVersion": 1, "default": {"provider": "codex", "model": "m"},
++                                   "providers": {"codex": {"executable": str(fake), "permissionMode": "read-only"},
++                                                 "claude": {"executable": str(fake), "permissionMode": "plan"}},
++                                   "roles": {}}))
++    monkeypatch.setenv("ALIENINTENT_MODEL_ROUTING", str(routing))
++    answer = WorkerPreparer(board.loaded())({"obligation": {"label": "FIXTURE"}})
++    assert answer["answer"] == "HOLD" and answer["reason"].startswith("cwd prepare-")
++    assert answer["reason"].endswith("obligation FIXTURE")
++    assert git(board.clone, "worktree", "list").decode().count("\n") == 1  # the session's clone is gone
++
++
++def _retired_and_stopped(board, result) -> None:
++    registry = board.loaded()
++    assert result.answer == STOPPED and registry.identities.find(result.identity).retired
++    assert service(board, Preparer()).prepare_next().answer == NOTHING  # a stop, never a live item blocking preparation
++
++
++def test_a_refused_revision_stops_the_obligation_and_retires_its_item(board):
++    board.answer.write_text("CLARIFY")
++    preparer = Preparer({"answer": "PACKET", "packet": packet(board)},
++                        {"answer": "PACKET", "packet": packet(board, scope=("outside/x.py",))})
++    _retired_and_stopped(board, service(board, preparer).prepare_next())
++
++
++def test_an_assessment_hold_stops_the_obligation_and_retires_its_item(board):
++    board.answer.write_text("HOLD")
++    _retired_and_stopped(board, service(board, Preparer({"answer": "PACKET", "packet": packet(board)})).prepare_next())
++
++
++def test_a_release_that_fails_stops_the_obligation_and_retires_its_item(board, monkeypatch):
++    from alienintent.context_assembly.application.inherited_release import InheritedRelease
++
++    def failing(self, identity):
++        raise RuntimeError("board unreachable")
++    monkeypatch.setattr(InheritedRelease, "release", failing)
++    _retired_and_stopped(board, service(board, Preparer({"answer": "PACKET", "packet": packet(board)})).prepare_next())
++
++
++def test_a_new_obligation_revision_prepares_a_new_item_never_the_old_one(board):
++    """The plan entry changes after the first item: the new revision's first item is a new Work Item at its own path."""
++    from tests.composition.test_work_registry import PLAN_SCOPE, plan_text
++    first = service(board, Preparer({"answer": "PACKET", "packet": packet(board)})).prepare_next()
++    board.loaded().identities.retire(first.identity)
++    changed = dict(PLAN_SCOPE, obligations=[dict(PLAN_SCOPE["obligations"][0], intent="Fixture intent, revised.")])
++    board.digest = board.approve(plan_text(changed))
++    second = service(board, Preparer({"answer": "PACKET", "packet": packet(board)})).prepare_next()
++    assert second.answer == RELEASED and second.identity != first.identity
+diff --git a/tests/composition/test_work_registry.py b/tests/composition/test_work_registry.py
+index ff06957..c94b386 100644
+--- a/tests/composition/test_work_registry.py
++++ b/tests/composition/test_work_registry.py
+@@ -334,8 +334,10 @@ class ReadyBoard(Linked):
+         """The packet; with `proof` set, also its targeted proof block (WORK-PREPARATION-REFILL R2)."""
+         payload = payload(item) if callable(payload) else payload
+         text = raw if raw is not None else json.dumps(payload or contract_payload(item.id), indent=1)
+-        proof = getattr(self, "proof", None)
++        proof, satisfies = getattr(self, "proof", None), getattr(self, "satisfies", None)
+         block = "" if proof is None else f"\n```json alienintent-proof\n{json.dumps({'targeted_tests': proof})}\n```\n"
++        if satisfies is not None:
++            block += f"\n```json alienintent-acceptance\n{json.dumps({'satisfies': satisfies})}\n```\n"
+         return (f"# Work unit: {item.label}\n\nidentity: not-this-one\n\n```json alienintent-contract\n{text}\n```\n"
+                 f"{block}".encode())
+ 
+@@ -1173,3 +1175,49 @@ def test_a_path_is_absent_at_a_revision_only_when_git_proves_it(tmp_path, monkey
+     monkeypatch.setattr(subprocess, "run", failing)
+     with pytest.raises(OSError):
+         revision_has(repo, sha, "tests/test_x.py")
++
++
++
++# --- WORK-PREPARATION-REFILL R3a: obligation state from the registry -------------------------------------------------
++
++def _done(plan_board, item, landed: str | None = None) -> None:
++    """The item at DONE in its coordinator record (the canonical lifecycle; the row follows by projection)."""
++    plan_board.registry.assessment.consumer.store.commit("registry", f"factory:{item.id}", 0, {
++        "stage": "DONE", "version": 9, "accepted": True, "closure": [], "outcome": "closed"})
++
++
++def test_an_obligation_is_finished_only_by_done_items_naming_its_acceptance_ids(plan_board):
++    from alienintent.context_assembly.domain.obligation_state import ELIGIBLE, FINISHED, IN_PROGRESS
++    digest = plan_board.approve()
++    plan_board.satisfies = ["FIXTURE-A1"]
++    item = plan_board.derived("PD-ACC", digest)
++    registry = plan_board.loaded()
++    [state] = registry.obligation_states(registry.plan_approval.current())
++    assert (state.label, state.status) == ("FIXTURE", IN_PROGRESS)  # registered, not final
++    _done(plan_board, item)
++    [state] = plan_board.loaded().obligation_states(registry.plan_approval.current())
++    assert (state.status, state.satisfied) == (FINISHED, ("FIXTURE-A1",))
++    plan_board.satisfies = None
++    other = plan_board.derived("PD-NONE", digest)  # a DONE item naming no ids satisfies nothing
++    _done(plan_board, other)
++    registry = plan_board.loaded()
++    registry.identities.retire(item.id)
++    [state] = registry.obligation_states(registry.plan_approval.current())
++    assert (state.status, state.satisfied) == (ELIGIBLE, ())
++
++
++def test_a_satisfied_by_mapping_holds_only_for_a_done_item_whose_landed_commit_is_on_canonical_main(plan_board):
++    from alienintent.execution_coordination.domain.plan_authority import Satisfaction
++    digest = plan_board.approve()
++    item = plan_board.derived("PD-MAP", digest)
++    on_main = git(plan_board.clone, "rev-parse", "HEAD").decode().strip()
++    side = commit_file(plan_board.clone, "side", "docs/side.md", b"side\n")
++    registry = plan_board.loaded()
++    registry._canonical_main(REPO)
++    entry = lambda commit: Satisfaction("FIXTURE-A1", item.id, commit, "docs/evidence/x.md")  # noqa: E731
++    assert registry.mapping_holds(entry(on_main)) is False  # not DONE yet
++    _done(plan_board, item)
++    registry = plan_board.loaded()
++    registry._canonical_main(REPO)
++    assert (registry.mapping_holds(entry(on_main)), registry.mapping_holds(entry(side))) == (True, False)
++    assert registry.mapping_holds(Satisfaction("FIXTURE-A1", "no-such-item", on_main, "e")) is False
+diff --git a/tests/context_assembly/test_preparation.py b/tests/context_assembly/test_preparation.py
+new file mode 100644
+index 0000000..3a719f3
+--- /dev/null
++++ b/tests/context_assembly/test_preparation.py
+@@ -0,0 +1,102 @@
++"""Work Preparation's deterministic check of a PREPARER packet (WORK-PREPARATION-REFILL R3a, spec 3.3-3.4; WPR-A2: "the
++control plane refuses any packet outside the obligation's authority before anything is written"). Plans and packets
++are TEST DATA."""
++from __future__ import annotations
++
++import json
++
++import pytest
++
++from alienintent.context_assembly.domain.preparation import (
++    PENDING, AcceptanceBlockInvalid, check_packet, parse_acceptance)
++from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH, PlanAuthority, parse_scope
++
++DIGEST = "sha256:" + "d" * 64
++SCOPE = {"target_repositories": ["AlienLogicLab/alienintent"], "capabilities": ["python", "filesystem"],
++         "budget_caps": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600, "cancellation_limit": 1,
++                         "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
++         "protected_paths": ["docs/decisions/", "src/pkg/protected.py"],
++         "obligations": [{"label": "FIXTURE", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
++                          "allowed_paths": ["src/pkg/", "tests/pkg/"], "intent": "Fixture intent.",
++                          "acceptance": [{"id": "FIXTURE-A1", "text": "One."}, {"id": "FIXTURE-A2", "text": "Two."}],
++                          "depends_on": [], "satisfied_by": []}]}
++
++
++def authority() -> PlanAuthority:
++    plan = f"# Plan\n\n```json alienintent-plan-authority\n{json.dumps(SCOPE)}\n```\n"
++    return PlanAuthority(PLAN_PATH, "c" * 40, DIGEST, f"git:{'c' * 40}:{PLAN_PATH}", "canonical main tip", "",
++                         parse_scope(plan))
++
++
++def contract(**changes) -> dict:
++    value = {"identity": PENDING, "version": "revision-1", "intent": "Do the fixture.",
++             "satisfied_requirement_ids": ["SF-REQ-002"], "fixed_decisions": ["none"],
++             "authorized_scope": ["src/pkg/a.py", "tests/pkg/test_a.py"], "excluded_scope": ["none"],
++             "dependencies": [], "required_capabilities": ["python"],
++             "budget_policy": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600, "cancellation_limit": 1},
++             "retry_policy": "verifier rejection returns to the PRODUCER", "completion_criteria": ["tests"],
++             "verification_obligations": ["independent VERIFIER"],
++             "required_evidence": ["independent-verifier-accepted"],
++             "non_goals": ["none"], "candidate_custody_requirements": ["exact candidate"],
++             "release_policy": "automatic-on", "authority_issuer": "plan-authority:" + DIGEST,
++             "authority_references": [f"{PLAN_PATH} obligation:FIXTURE"],
++             "target_repositories": ["AlienLogicLab/alienintent"], "baselines": ["main"],
++             "required_closure_actions": ["candidate-published", "merged-to-main", "landing-record", "board-updated",
++                                          "workspaces-cleaned"],
++             "stop_escalation_conditions": ["scope"]}
++    return value | changes
++
++
++def packet(payload: dict | None = None, satisfies=("FIXTURE-A1",), proof=("tests/pkg/test_a.py",), extra="") -> bytes:
++    blocks = [f"```json alienintent-contract\n{json.dumps(payload or contract(), indent=1)}\n```"]
++    if satisfies is not None:
++        blocks.append(f"```json alienintent-acceptance\n{json.dumps({'satisfies': list(satisfies)})}\n```")
++    if proof is not None:
++        blocks.append(f"```json alienintent-proof\n{json.dumps({'targeted_tests': list(proof)})}\n```")
++    return ("# Work unit\n\n" + "\n\n".join(blocks) + "\n" + extra).encode()
++
++
++def check(data: bytes, label="FIXTURE") -> tuple[str, ...]:
++    return check_packet(data, authority(), label)
++
++
++def test_a_packet_inside_the_obligation_and_the_live_tip_passes():
++    assert check(packet()) == ()
++    assert check(packet(satisfies=("FIXTURE-A1", "FIXTURE-A2"))) == ()
++
++
++def test_the_acceptance_block_names_the_ids_a_packet_satisfies():
++    assert parse_acceptance(packet().decode()) == ("FIXTURE-A1",)
++    assert parse_acceptance(packet(satisfies=None).decode()) is None
++    with pytest.raises(AcceptanceBlockInvalid):
++        parse_acceptance(packet(extra="```json alienintent-acceptance\n{\"satisfies\": []}\n```\n").decode())
++
++
++@pytest.mark.parametrize("case, data, reason", [
++    pytest.param("not-a-contract", b"# no contract\n", "contract:", id="not-a-contract"),
++    pytest.param("registered-identity", packet(contract(identity="0" * 8)), "contract:", id="registered-identity"),
++    pytest.param("other-obligation", packet(contract(authority_references=[f"{PLAN_PATH} obligation:OTHER"])),
++                 "obligation:", id="other-obligation"),
++    pytest.param("older-issuer", packet(contract(authority_issuer="plan-authority:sha256:" + "e" * 64)), "issuer:",
++                 id="older-issuer"),
++    pytest.param("explicit", packet(contract(release_policy="explicit-human-off")), "release_policy:",
++                 id="explicit-release"),
++    pytest.param("outside", packet(contract(authorized_scope=["src/other/a.py"])), "owner-decision-required:",
++                 id="scope-outside-the-obligation"),
++    pytest.param("protected", packet(contract(authorized_scope=["src/pkg/protected.py"])), "owner-decision-required:",
++                 id="scope-on-a-protected-path"),
++    pytest.param("budget", packet(contract(budget_policy={"maximum_attempts": 9, "hard_wall_clock_seconds": 3600,
++                                                          "cancellation_limit": 1})), "owner-decision-required:",
++                 id="budget-above-the-cap"),
++    pytest.param("no-acceptance", packet(satisfies=None), "acceptance:", id="no-acceptance-block"),
++    pytest.param("foreign-id", packet(satisfies=("OTHER-A1",)), "acceptance:", id="acceptance-id-not-the-obligations"),
++    pytest.param("no-proof", packet(proof=None), "proof:", id="no-proof-block"),
++    pytest.param("bad-proof", packet(proof=("src/pkg/a.py",)), "proof:", id="proof-not-a-test-file"),
++])
++def test_a_packet_outside_the_obligation_or_the_tip_is_refused_with_its_reason(case, data, reason):
++    reasons = check(data)
++    assert reasons and any(r.startswith(reason) for r in reasons), reasons
++
++
++def test_a_packet_for_an_obligation_the_tip_does_not_hold_is_refused():
++    assert any(r.startswith("obligation:") for r in check(packet(), label="GONE"))
+diff --git a/tests/control_plane/test_cli.py b/tests/control_plane/test_cli.py
+index dcc60da..c5e4545 100644
+--- a/tests/control_plane/test_cli.py
++++ b/tests/control_plane/test_cli.py
+@@ -623,6 +623,7 @@ def test_work_context_runs_with_only_the_worker_environment(tmp_path: Path) -> N
+     ["work", "authorize", "UNIT", "--commit", "c", "--attempt", "a", "--baseline", "b", "--quote", "q"],
+     ["work", "approve-plan", "--commit", "c", "--quote", "q"],
+     ["work", "release", "UNIT"],
++    ["work", "prepare"],
+     ["work", "record-completed", "UNIT", "--candidate", "c", "--landing", "l", "--record", "r", "--verification", "v",
+      "--approval", "a", "--quote", "q"],
+     ["work", "link", "UNIT"],
+@@ -648,6 +649,24 @@ def test_the_worker_profile_answers_every_other_command_with_the_stated_error(tm
+     assert cx.written() == before
+ 
+ 
++def test_work_prepare_runs_one_preparation_and_renders_its_typed_answer(monkeypatch, capsys) -> None:
++    """WORK-PREPARATION-REFILL R3a: `work prepare` calls the registry's Work Preparation once and renders its answer;
++    a registry without one answers the stated error."""
++    from types import SimpleNamespace
++    from alienintent.composition.work_preparation import PreparationResult
++    from alienintent.control_plane.adapters import cli
++    calls = []
++    registry = SimpleNamespace(preparation=SimpleNamespace(prepare_next=lambda: calls.append(1) or PreparationResult(
++        "released", "FIXTURE", "id-1", "")))
++    monkeypatch.setattr(cli, "_factory", lambda path: SimpleNamespace(work_registry=registry))
++    assert cli.main(["--json", "--profile-factory", "x:y", "work", "prepare"]) == 0
++    assert json.loads(capsys.readouterr().out) == {"answer": "released", "obligation": "FIXTURE", "identity": "id-1",
++                                                   "detail": ""} and calls == [1]
++    registry.preparation = None
++    assert cli.main(["--json", "--profile-factory", "x:y", "work", "prepare"]) == 1
++    assert json.loads(capsys.readouterr().out) == {"error": "readiness-not-configured"}
++
++
+ # --- unit 6c-2: `work launch` and `work context --contract-digest` ---------------------------------------------------
+ 
+ 
