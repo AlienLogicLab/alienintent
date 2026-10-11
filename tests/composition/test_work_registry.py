@@ -334,8 +334,10 @@ class ReadyBoard(Linked):
         """The packet; with `proof` set, also its targeted proof block (WORK-PREPARATION-REFILL R2)."""
         payload = payload(item) if callable(payload) else payload
         text = raw if raw is not None else json.dumps(payload or contract_payload(item.id), indent=1)
-        proof = getattr(self, "proof", None)
+        proof, satisfies = getattr(self, "proof", None), getattr(self, "satisfies", None)
         block = "" if proof is None else f"\n```json alienintent-proof\n{json.dumps({'targeted_tests': proof})}\n```\n"
+        if satisfies is not None:
+            block += f"\n```json alienintent-acceptance\n{json.dumps({'satisfies': satisfies})}\n```\n"
         return (f"# Work unit: {item.label}\n\nidentity: not-this-one\n\n```json alienintent-contract\n{text}\n```\n"
                 f"{block}".encode())
 
@@ -1173,3 +1175,49 @@ def test_a_path_is_absent_at_a_revision_only_when_git_proves_it(tmp_path, monkey
     monkeypatch.setattr(subprocess, "run", failing)
     with pytest.raises(OSError):
         revision_has(repo, sha, "tests/test_x.py")
+
+
+
+# --- WORK-PREPARATION-REFILL R3a: obligation state from the registry -------------------------------------------------
+
+def _done(plan_board, item, landed: str | None = None) -> None:
+    """The item at DONE in its coordinator record (the canonical lifecycle; the row follows by projection)."""
+    plan_board.registry.assessment.consumer.store.commit("registry", f"factory:{item.id}", 0, {
+        "stage": "DONE", "version": 9, "accepted": True, "closure": [], "outcome": "closed"})
+
+
+def test_an_obligation_is_finished_only_by_done_items_naming_its_acceptance_ids(plan_board):
+    from alienintent.context_assembly.domain.obligation_state import ELIGIBLE, FINISHED, IN_PROGRESS
+    digest = plan_board.approve()
+    plan_board.satisfies = ["FIXTURE-A1"]
+    item = plan_board.derived("PD-ACC", digest)
+    registry = plan_board.loaded()
+    [state] = registry.obligation_states(registry.plan_approval.current())
+    assert (state.label, state.status) == ("FIXTURE", IN_PROGRESS)  # registered, not final
+    _done(plan_board, item)
+    [state] = plan_board.loaded().obligation_states(registry.plan_approval.current())
+    assert (state.status, state.satisfied) == (FINISHED, ("FIXTURE-A1",))
+    plan_board.satisfies = None
+    other = plan_board.derived("PD-NONE", digest)  # a DONE item naming no ids satisfies nothing
+    _done(plan_board, other)
+    registry = plan_board.loaded()
+    registry.identities.retire(item.id)
+    [state] = registry.obligation_states(registry.plan_approval.current())
+    assert (state.status, state.satisfied) == (ELIGIBLE, ())
+
+
+def test_a_satisfied_by_mapping_holds_only_for_a_done_item_whose_landed_commit_is_on_canonical_main(plan_board):
+    from alienintent.execution_coordination.domain.plan_authority import Satisfaction
+    digest = plan_board.approve()
+    item = plan_board.derived("PD-MAP", digest)
+    on_main = git(plan_board.clone, "rev-parse", "HEAD").decode().strip()
+    side = commit_file(plan_board.clone, "side", "docs/side.md", b"side\n")
+    registry = plan_board.loaded()
+    registry._canonical_main(REPO)
+    entry = lambda commit: Satisfaction("FIXTURE-A1", item.id, commit, "docs/evidence/x.md")  # noqa: E731
+    assert registry.mapping_holds(entry(on_main)) is False  # not DONE yet
+    _done(plan_board, item)
+    registry = plan_board.loaded()
+    registry._canonical_main(REPO)
+    assert (registry.mapping_holds(entry(on_main)), registry.mapping_holds(entry(side))) == (True, False)
+    assert registry.mapping_holds(Satisfaction("FIXTURE-A1", "no-such-item", on_main, "e")) is False
