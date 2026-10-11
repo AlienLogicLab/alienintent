@@ -1,8 +1,8 @@
 # Work unit: the PREPARER and Work Preparation (WORK-PREPARATION-REFILL R3a)
 
-**Label:** `WORK-PREPARATION-REFILL-R3a-R2` (a document label; permanent id `PENDING-REGISTRATION`); the re-issue of
+**Label:** `WORK-PREPARATION-REFILL-R3a-R2` (a document label; permanent id `a340df1a-6729-4fc2-b1a8-b62e7263dd06`); the re-issue of
 WORK-PREPARATION-REFILL-R3a (work item 9eedc2c9, cancelled and retired, decisions section 55), registered with it as parent.
-**Status:** Revision 1, 2026-10-11. Not registered.
+**Status:** Revision 1, 2026-10-11. Registered as work item a340df1a-6729-4fc2-b1a8-b62e7263dd06.
 **Authority:** plan-derived from obligation WORK-PREPARATION-REFILL of the live canonical plan (tip `821e95d`,
 `sha256:3be660b28ca00d450a0baa195161e9dcfe33ed63b2cbd13da9ca712c556f2324`); acceptance WPR-A2. Released by `work release` (inherited release) and run by `work run --wait`; no
 `work launch`.
@@ -13,7 +13,7 @@ WORK-PREPARATION-REFILL-R3a (work item 9eedc2c9, cancelled and retired, decision
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "a340df1a-6729-4fc2-b1a8-b62e7263dd06",
  "version": "revision-1",
  "intent": "WPR-A2: a PREPARER derives the next bounded Work Item for the next eligible obligation from the live plan tip, with provenance, and the control plane refuses any packet outside the obligation's authority before anything is written: `work prepare` (Work Preparation's prepare_next) selects the next eligible obligation from registry-derived obligation state, runs one bounded PREPARER session, checks the packet, commits it to the packets branch, registers and binds it, assesses it with Agent Ready and releases a READY item by inherited release; every other outcome is a typed stop, never the Decision Inbox.",
  "satisfied_requirement_ids": [
