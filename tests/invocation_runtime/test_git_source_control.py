@@ -12,6 +12,7 @@ import pytest
 
 from alienintent.invocation_runtime.adapters import git_source_control as module
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
+from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable, CandidateUnreadable
 from alienintent.invocation_runtime.ports.source_control import PublicationFailed, PublishRef
 
 IDENTITY = ("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false")
@@ -508,3 +509,85 @@ def test_the_worker_clone_and_fetch_give_the_ownership_exception_to_upload_pack_
     assert f"--upload-pack=git -c safe.directory={handover.packets / '.git'} upload-pack" in clone
     assert f"--upload-pack=git -c safe.directory={handover.launch / 'intake.git'} upload-pack" in fetch
     assert not [word for argv in (clone, fetch) for word in argv if word.startswith("safe.directory=")]
+
+
+# --- CUSTODY-READ-INFRASTRUCTURE-RETRY (Founder decision 48): "cannot read the candidate right now" is not "custody is
+# invalid". Only a remote that cannot be read is CandidateUnreadable; a remote that answers without the exact candidate
+# stays the custody refusal CandidateUnavailable.
+
+def _published(repo, tmp_path):
+    from hashlib import sha256
+    from alienintent.execution_coordination.domain.custody import CandidateRef
+    clone, remote, commits = repo
+    git(clone, "push", "-q", "origin", f"{commits[2]}:refs/heads/candidate/c1")
+    return lambda locator_remote=remote, branch="candidate/c1": CandidateRef.source_revision(
+        "sha256:" + sha256(commits[2].encode()).hexdigest(), f"git:{locator_remote}#{branch}@{commits[2]}")
+
+
+def test_retrieval_from_a_remote_that_cannot_be_read_is_unreadable_never_a_custody_judgment(repo, tmp_path):
+    candidate = _published(repo, tmp_path)
+    with pytest.raises(CandidateUnreadable):
+        GitSourceControl().retrieve_for_verification(candidate(tmp_path / "unreachable.git"), tmp_path / "v1")
+    assert not (tmp_path / "v1").exists()
+    retrieved = GitSourceControl().retrieve_for_verification(candidate(), tmp_path / "v2")
+    assert retrieved.verify_admissible
+
+
+@pytest.mark.parametrize("case", ["branch-missing", "branch-elsewhere"])
+def test_retrieval_from_a_remote_that_answers_without_the_exact_candidate_is_a_custody_refusal(repo, tmp_path, case):
+    clone, remote, commits = repo
+    candidate = _published(repo, tmp_path)
+    if case == "branch-elsewhere":
+        git(clone, "push", "-q", "-f", "origin", f"{commits[1]}:refs/heads/candidate/c1")
+    with pytest.raises(CandidateUnavailable) as refused:
+        GitSourceControl().retrieve_for_verification(
+            candidate(branch="candidate/gone") if case == "branch-missing" else candidate(), tmp_path / "v1")
+    assert not isinstance(refused.value, CandidateUnreadable)
+
+
+def test_a_worker_clone_of_a_candidate_whose_remote_cannot_be_read_is_unreadable_and_a_missing_one_a_refusal(
+        handover, monkeypatch):
+    """The worker path reads the remote once (`ls-remote` of the packets remote); everything after reads the local
+    intake. That one read failing is CandidateUnreadable; a remote answering without the candidate branch, or an
+    intake not holding the exact candidate, stays the custody refusal."""
+    from dataclasses import replace
+    workspace, claimed = handover.produce()
+    handover.source.hand_over("c1", workspace, claimed, handover.base)
+    candidate = handover.source.publish_intake("c1", "candidate/c1", claimed, handover.launch / "verifier" / "p-c1")
+    real = handover.source.remote_url
+    monkeypatch.setattr(handover.source, "remote_url", lambda: str(handover.tmp / "unreachable.git"))
+    with pytest.raises(CandidateUnreadable):
+        handover.source.candidate_clone("verifier", "v1", "owner", candidate)
+    monkeypatch.setattr(handover.source, "remote_url", real)
+    gone = replace(candidate, locator=candidate.locator.replace("#candidate/c1@", "#candidate/gone@"))
+    with pytest.raises(CandidateUnavailable) as refused:
+        handover.source.candidate_clone("verifier", "v2", "owner", gone)
+    assert not isinstance(refused.value, CandidateUnreadable)
+    clone = handover.source.candidate_clone("verifier", "v3", "owner", candidate).path
+    assert git(clone, "rev-parse", "HEAD") == claimed
+
+
+def test_a_clone_that_fails_after_the_remote_answered_is_unreadable(repo, tmp_path, monkeypatch):
+    candidate = _published(repo, tmp_path)
+    real = GitSourceControl._git
+
+    def failing_clone(self, *args, cwd=None):
+        if args[0] == "clone":
+            raise CandidateUnavailable("git operation failed")
+        return real(self, *args, cwd=cwd)
+    monkeypatch.setattr(GitSourceControl, "_git", failing_clone)
+    with pytest.raises(CandidateUnreadable):
+        GitSourceControl().retrieve_for_verification(candidate(), tmp_path / "v1")
+
+
+def test_a_worker_clone_from_an_intake_that_is_gone_fails_closed_never_retried_as_unreadable(handover):
+    """No intake repository means it does not hold the candidate: a custody refusal, decided locally before the
+    remote is asked, never an infrastructure retry."""
+    import shutil
+    workspace, claimed = handover.produce()
+    handover.source.hand_over("c1", workspace, claimed, handover.base)
+    candidate = handover.source.publish_intake("c1", "candidate/c1", claimed, handover.launch / "verifier" / "p-c1")
+    shutil.rmtree(handover.launch / "intake.git")
+    with pytest.raises(CandidateUnavailable) as refused:
+        handover.source.candidate_clone("verifier", "v1", "owner", candidate)
+    assert not isinstance(refused.value, CandidateUnreadable)

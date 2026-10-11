@@ -54,6 +54,13 @@ class CandidateUnavailable(ValueError):
     pass
 
 
+class CandidateUnreadable(CandidateUnavailable):
+    """The exact candidate could not be read right now (the remote that holds it could not be asked): infrastructure,
+    retried on the same candidate, never a custody judgment (CUSTODY-READ-INFRASTRUCTURE-RETRY, Founder decision 48:
+    "cannot read the candidate right now" is not "candidate custody is invalid"). A remote that answers without the
+    exact candidate stays CandidateUnavailable and fails closed."""
+
+
 class ScriptRejected(ValueError):
     """A scripted worker step is not one the deterministic adapter can perform."""
 

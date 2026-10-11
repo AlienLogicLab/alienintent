@@ -1121,6 +1121,42 @@ def test_a_closure_outcome_that_is_not_infrastructure_resets_the_closure_streak(
     assert advanced.fields["closure_infrastructure_retries"] == 0
 
 
+def test_a_verifier_that_cannot_read_the_candidate_retries_on_the_same_candidate_with_no_founder_decision(
+        tmp_path: Path) -> None:
+    """CUSTODY-READ-INFRASTRUCTURE-RETRY (Founder decision 48): the exact candidate could not be read right now. The
+    item stays at VERIFY on the same candidate, no rejection or attempt is used, a later pass retries, and VERIFY
+    continues once it can be read."""
+    _, _, _, provider = _api()
+    coordinator, worker, store = _wip(tmp_path, [_item("V", 0, 1)], {"V": ["success"]}, Limit(1),
+                                      verdicts={"V": [provider.CANDIDATE_UNREADABLE, "accept"]})
+    coordinator.start()
+    state = coordinator.state("V")
+    candidate = state.state.candidate
+    assert (state.stage, state.outcome, state.record["verifier_custody_retries"]) == (
+        LifecycleStage.VERIFY, "verifier-retry", 1)
+    coordinator.run()
+    assert coordinator.state("V").stage is LifecycleStage.DONE and coordinator.state("V").state.candidate == candidate
+    assert coordinator.state("V").record.get("rejections", 0) == 0 and _founder_decisions(store) == {}
+
+
+def test_a_candidate_unreadable_past_the_retries_holds_as_infrastructure_and_a_custody_refusal_still_fails_closed(
+        tmp_path: Path) -> None:
+    _, _, _, provider = _api()
+    coordinator, worker, store = _wip(tmp_path, [_item("X", 0, 1), _item("Y", 1, 2)],
+                                      {"X": ["success"], "Y": ["success"]}, Limit(2), verdicts={"X": [provider.CANDIDATE_UNREADABLE] * 3,
+                                                          "Y": ["candidate-unavailable"]})
+    coordinator.run()
+    held = coordinator.state("X")
+    assert (held.stage, held.outcome, held.record["hold_reason"]) == (
+        LifecycleStage.VERIFY, "infrastructure-hold", "verifier-infrastructure-exhausted:candidate-unreadable")
+    assert "X" not in _founder_decisions(store)
+    assert coordinator.state("Y").outcome == "authority-block" and "Y" in _founder_decisions(store)
+    restarted, _, _ = _wip(tmp_path, [_item("X", 0, 1)], {}, Limit(2), verdicts={"X": ["accept"]},
+                           store=SQLiteOperationalStore(tmp_path / "run.sqlite"))
+    restarted.run()
+    assert restarted.state("X").stage is LifecycleStage.DONE
+
+
 def test_work_launch_names_an_infrastructure_hold_in_its_summary(tmp_path: Path) -> None:
     _, _, _, provider = _api()
     coordinator, worker, store = _wip(tmp_path, [_item("L", 0, 1)], {"L": [provider.CANONICAL_MAIN_UNAVAILABLE] * 3},

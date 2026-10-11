@@ -20,14 +20,15 @@ from alienintent.execution_coordination.domain.verdict import EvidenceDefinition
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
 from alienintent.execution_coordination.ports.release_admission import ExecutionAllocation
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
-from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, NO_CHANGE, PRODUCER, PRODUCER_INFRASTRUCTURE, SCOPE_VIOLATION, VERIFIER, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, NO_CHANGE, PRODUCER, PRODUCER_INFRASTRUCTURE, SCOPE_VIOLATION, VERIFIER, CANDIDATE_READ_INFRASTRUCTURE, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
 
 # K2: each nonterminal stage is advanced by exactly one canonical role.
 ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERIFIER, LifecycleStage.ACCEPT: CLOSURE}
 # Execution-record fields that survive every later commit of the same aggregate.
 CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict",
-           "closure_retries", "verifier_retries", "producer_retries", "closure_infrastructure_retries")
+           "closure_retries", "verifier_retries", "producer_retries", "closure_infrastructure_retries",
+           "verifier_custody_retries")
 # A malformed CLOSURE request: the item stays at ACCEPT and the next launch runs a fresh CLOSURE session.
 CLOSURE_RETRY = "closure-retry"
 # A VERIFIER that ended without a valid verdict: the item stays at VERIFY on the same candidate and the next launch runs
@@ -38,7 +39,8 @@ VERIFIER_RETRY, VERIFIER_RETRY_LIMIT = "verifier-retry", 2
 # that is neither an authority block nor a Founder decision (Founder decisions section 44) and that the next run of
 # the factory (a new coordinator) retries with a fresh count.
 PRODUCER_RETRY, INFRASTRUCTURE_HOLD = "producer-retry", "infrastructure-hold"
-INFRASTRUCTURE_COUNTERS = {PRODUCER: "producer_retries", CLOSURE: "closure_infrastructure_retries"}
+INFRASTRUCTURE_COUNTERS = {PRODUCER: "producer_retries", VERIFIER: "verifier_custody_retries",
+                           CLOSURE: "closure_infrastructure_retries"}
 # One WIP slot per admitted work item, held until its recorded state is DONE or a final outcome: an outcome the
 # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
 WIP_SCOPE = "wip"
@@ -572,6 +574,10 @@ class FactoryCoordinator:
                             {"producer_correlation": invocation.correlation_id, "verifier_retries": 0,
                              "producer_retries": 0})
         if invocation.role == VERIFIER:
+            if outcome.kind in CANDIDATE_READ_INFRASTRUCTURE:  # same candidate, retried, then typed infrastructure
+                return self._retry_infrastructure(item, state=current, prior=prior, kind=outcome.kind,
+                                                  counter="verifier_custody_retries", retry=VERIFIER_RETRY,
+                                                  role="verifier", fields={})
             if outcome.kind in VERIFIER_INFRASTRUCTURE:
                 return self._retry_verifier(current, prior, outcome.kind)
             producer = prior.get("producer_correlation")
@@ -598,6 +604,10 @@ class FactoryCoordinator:
                 return self._rework(item, reviewed, prior, invocation, "review", (verdict.reason,))
             accepted = transition(reviewed, reviewed.version, "accept", verdict=verdict)
             return _Advance(accepted, "accept", {"verdict": {"kind": str(verdict.kind), "reason": verdict.reason, "verifier_correlation": invocation.correlation_id}})
+        if outcome.kind in CANDIDATE_READ_INFRASTRUCTURE:  # CLOSURE could not read the candidate: same candidate, retried
+            return self._retry_infrastructure(item, state=current, prior=prior, kind=outcome.kind,
+                                              counter="closure_infrastructure_retries", retry=CLOSURE_RETRY,
+                                              role="closure", fields={})
         if is_fixed(item.contract.required_closure_actions):
             return self._advance_closure(item, current, prior, invocation, outcome)
         receipts = frozenset(outcome.receipts)

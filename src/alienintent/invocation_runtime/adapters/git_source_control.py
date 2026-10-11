@@ -14,7 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
 from alienintent.execution_coordination.domain.custody import CandidateRef
 from alienintent.invocation_runtime.adapters.cli_worker import run_as_worker
 from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, WorkerCloneAdapter, ref_safe
-from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
+from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable, CandidateUnreadable
 from alienintent.invocation_runtime.ports.source_control import PublicationFailed, PublishRef, SourceControl
 
 PUBLISH_TIMEOUT_SECONDS = 300
@@ -208,10 +208,16 @@ class GitSourceControl(SourceControl):
                 raise ValueError
         except ValueError:
             raise CandidateUnavailable("candidate cannot be independently retrieved") from None
-        advertised = self._git("ls-remote", remote, f"refs/heads/{branch}")
+        try:  # the two reads of the remote: failing to reach it is infrastructure, never a custody judgment
+            advertised = self._git("ls-remote", remote, f"refs/heads/{branch}")
+        except CandidateUnavailable:
+            raise CandidateUnreadable("the remote holding the candidate cannot be read") from None
         if not advertised or advertised.split()[0] != revision:
             raise CandidateUnavailable("candidate revision is not retrievable for verifier")
-        self._git("clone", "--no-checkout", remote, str(verifier_workspace))
+        try:
+            self._git("clone", "--no-checkout", remote, str(verifier_workspace))
+        except CandidateUnavailable:
+            raise CandidateUnreadable("the remote holding the candidate cannot be cloned") from None
         if self._git("rev-parse", f"{revision}^{{commit}}", cwd=verifier_workspace) != revision:
             raise CandidateUnavailable("verifier clone cannot retrieve exact candidate revision")
         expected_digest = f"sha256:{sha256(revision.encode()).hexdigest()}"
@@ -394,7 +400,12 @@ class IntakeSourceControl(GitSourceControl, SourceControl):
             raise CandidateUnavailable("candidate cannot be independently retrieved") from None
         if candidate.content_digest != f"sha256:{sha256(revision.encode()).hexdigest()}":
             raise CandidateUnavailable("candidate digest does not match immutable revision")
-        advertised = self._intake_out("ls-remote", "--", self.remote_url(), f"refs/heads/{branch}")
+        if not (self.intake / "HEAD").is_file():  # no intake holds no candidate: a custody refusal, decided locally
+            raise CandidateUnavailable("intake does not hold the exact candidate")
+        try:  # the one read of the remote: failing to reach it is infrastructure, never a custody judgment
+            advertised = self._intake_out("ls-remote", "--", self.remote_url(), f"refs/heads/{branch}")
+        except CandidateUnavailable:
+            raise CandidateUnreadable("the packets remote holding the candidate cannot be read") from None
         if not advertised or advertised.split()[0] != revision:
             raise CandidateUnavailable("candidate revision is not retrievable for verifier")
         ref = f"refs/intake/{branch.removeprefix('candidate/')}"
