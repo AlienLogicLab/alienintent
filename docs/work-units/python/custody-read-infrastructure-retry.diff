@@ -1,0 +1,392 @@
+diff --git a/src/alienintent/execution_coordination/application/factory_coordinator.py b/src/alienintent/execution_coordination/application/factory_coordinator.py
+index 71e7fc4..6a4c830 100644
+--- a/src/alienintent/execution_coordination/application/factory_coordinator.py
++++ b/src/alienintent/execution_coordination/application/factory_coordinator.py
+@@ -20,14 +20,15 @@ from alienintent.execution_coordination.domain.verdict import EvidenceDefinition
+ from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
+ from alienintent.execution_coordination.ports.release_admission import ExecutionAllocation
+ from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
+-from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, NO_CHANGE, PRODUCER, PRODUCER_INFRASTRUCTURE, SCOPE_VIOLATION, VERIFIER, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
++from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, NO_CHANGE, PRODUCER, PRODUCER_INFRASTRUCTURE, SCOPE_VIOLATION, VERIFIER, CANDIDATE_READ_INFRASTRUCTURE, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
+ from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
+ 
+ # K2: each nonterminal stage is advanced by exactly one canonical role.
+ ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERIFIER, LifecycleStage.ACCEPT: CLOSURE}
+ # Execution-record fields that survive every later commit of the same aggregate.
+ CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict",
+-           "closure_retries", "verifier_retries", "producer_retries", "closure_infrastructure_retries")
++           "closure_retries", "verifier_retries", "producer_retries", "closure_infrastructure_retries",
++           "verifier_custody_retries")
+ # A malformed CLOSURE request: the item stays at ACCEPT and the next launch runs a fresh CLOSURE session.
+ CLOSURE_RETRY = "closure-retry"
+ # A VERIFIER that ended without a valid verdict: the item stays at VERIFY on the same candidate and the next launch runs
+@@ -38,7 +39,8 @@ VERIFIER_RETRY, VERIFIER_RETRY_LIMIT = "verifier-retry", 2
+ # that is neither an authority block nor a Founder decision (Founder decisions section 44) and that the next run of
+ # the factory (a new coordinator) retries with a fresh count.
+ PRODUCER_RETRY, INFRASTRUCTURE_HOLD = "producer-retry", "infrastructure-hold"
+-INFRASTRUCTURE_COUNTERS = {PRODUCER: "producer_retries", CLOSURE: "closure_infrastructure_retries"}
++INFRASTRUCTURE_COUNTERS = {PRODUCER: "producer_retries", VERIFIER: "verifier_custody_retries",
++                           CLOSURE: "closure_infrastructure_retries"}
+ # One WIP slot per admitted work item, held until its recorded state is DONE or a final outcome: an outcome the
+ # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
+ WIP_SCOPE = "wip"
+@@ -572,6 +574,10 @@ class FactoryCoordinator:
+                             {"producer_correlation": invocation.correlation_id, "verifier_retries": 0,
+                              "producer_retries": 0})
+         if invocation.role == VERIFIER:
++            if outcome.kind in CANDIDATE_READ_INFRASTRUCTURE:  # same candidate, retried, then typed infrastructure
++                return self._retry_infrastructure(item, state=current, prior=prior, kind=outcome.kind,
++                                                  counter="verifier_custody_retries", retry=VERIFIER_RETRY,
++                                                  role="verifier", fields={})
+             if outcome.kind in VERIFIER_INFRASTRUCTURE:
+                 return self._retry_verifier(current, prior, outcome.kind)
+             producer = prior.get("producer_correlation")
+@@ -598,6 +604,10 @@ class FactoryCoordinator:
+                 return self._rework(item, reviewed, prior, invocation, "review", (verdict.reason,))
+             accepted = transition(reviewed, reviewed.version, "accept", verdict=verdict)
+             return _Advance(accepted, "accept", {"verdict": {"kind": str(verdict.kind), "reason": verdict.reason, "verifier_correlation": invocation.correlation_id}})
++        if outcome.kind in CANDIDATE_READ_INFRASTRUCTURE:  # CLOSURE could not read the candidate: same candidate, retried
++            return self._retry_infrastructure(item, state=current, prior=prior, kind=outcome.kind,
++                                              counter="closure_infrastructure_retries", retry=CLOSURE_RETRY,
++                                              role="closure", fields={})
+         if is_fixed(item.contract.required_closure_actions):
+             return self._advance_closure(item, current, prior, invocation, outcome)
+         receipts = frozenset(outcome.receipts)
+diff --git a/src/alienintent/execution_coordination/ports/worker_provider.py b/src/alienintent/execution_coordination/ports/worker_provider.py
+index 1b309ea..984a673 100644
+--- a/src/alienintent/execution_coordination/ports/worker_provider.py
++++ b/src/alienintent/execution_coordination/ports/worker_provider.py
+@@ -37,6 +37,12 @@ VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "v
+ # keeps the stage and retries on a later pass, never an authority hold.
+ CANONICAL_MAIN_UNAVAILABLE = "canonical-main-unavailable"
+ PRODUCER_INFRASTRUCTURE = frozenset({CANONICAL_MAIN_UNAVAILABLE})
++# A VERIFIER or CLOSURE that could not read the exact candidate right now (the remote holding it could not be asked):
++# no custody judgment was made (CUSTODY-READ-INFRASTRUCTURE-RETRY, Founder decision 48); the coordinator keeps the
++# stage on the same candidate and retries, then holds as typed infrastructure, never an authority hold. A remote that
++# answers without the exact candidate stays `candidate-unavailable`, a custody refusal.
++CANDIDATE_UNREADABLE = "candidate-unreadable"
++CANDIDATE_READ_INFRASTRUCTURE = frozenset({CANDIDATE_UNREADABLE})
+ 
+ 
+ @dataclass(frozen=True)
+diff --git a/src/alienintent/invocation_runtime/adapters/git_source_control.py b/src/alienintent/invocation_runtime/adapters/git_source_control.py
+index e7ea020..2269c83 100644
+--- a/src/alienintent/invocation_runtime/adapters/git_source_control.py
++++ b/src/alienintent/invocation_runtime/adapters/git_source_control.py
+@@ -14,7 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
+ from alienintent.execution_coordination.domain.custody import CandidateRef
+ from alienintent.invocation_runtime.adapters.cli_worker import run_as_worker
+ from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, WorkerCloneAdapter, ref_safe
+-from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
++from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable, CandidateUnreadable
+ from alienintent.invocation_runtime.ports.source_control import PublicationFailed, PublishRef, SourceControl
+ 
+ PUBLISH_TIMEOUT_SECONDS = 300
+@@ -208,10 +208,16 @@ class GitSourceControl(SourceControl):
+                 raise ValueError
+         except ValueError:
+             raise CandidateUnavailable("candidate cannot be independently retrieved") from None
+-        advertised = self._git("ls-remote", remote, f"refs/heads/{branch}")
++        try:  # the two reads of the remote: failing to reach it is infrastructure, never a custody judgment
++            advertised = self._git("ls-remote", remote, f"refs/heads/{branch}")
++        except CandidateUnavailable:
++            raise CandidateUnreadable("the remote holding the candidate cannot be read") from None
+         if not advertised or advertised.split()[0] != revision:
+             raise CandidateUnavailable("candidate revision is not retrievable for verifier")
+-        self._git("clone", "--no-checkout", remote, str(verifier_workspace))
++        try:
++            self._git("clone", "--no-checkout", remote, str(verifier_workspace))
++        except CandidateUnavailable:
++            raise CandidateUnreadable("the remote holding the candidate cannot be cloned") from None
+         if self._git("rev-parse", f"{revision}^{{commit}}", cwd=verifier_workspace) != revision:
+             raise CandidateUnavailable("verifier clone cannot retrieve exact candidate revision")
+         expected_digest = f"sha256:{sha256(revision.encode()).hexdigest()}"
+@@ -394,7 +400,12 @@ class IntakeSourceControl(GitSourceControl, SourceControl):
+             raise CandidateUnavailable("candidate cannot be independently retrieved") from None
+         if candidate.content_digest != f"sha256:{sha256(revision.encode()).hexdigest()}":
+             raise CandidateUnavailable("candidate digest does not match immutable revision")
+-        advertised = self._intake_out("ls-remote", "--", self.remote_url(), f"refs/heads/{branch}")
++        if not (self.intake / "HEAD").is_file():  # no intake holds no candidate: a custody refusal, decided locally
++            raise CandidateUnavailable("intake does not hold the exact candidate")
++        try:  # the one read of the remote: failing to reach it is infrastructure, never a custody judgment
++            advertised = self._intake_out("ls-remote", "--", self.remote_url(), f"refs/heads/{branch}")
++        except CandidateUnavailable:
++            raise CandidateUnreadable("the packets remote holding the candidate cannot be read") from None
+         if not advertised or advertised.split()[0] != revision:
+             raise CandidateUnavailable("candidate revision is not retrievable for verifier")
+         ref = f"refs/intake/{branch.removeprefix('candidate/')}"
+diff --git a/src/alienintent/invocation_runtime/application/real_worker.py b/src/alienintent/invocation_runtime/application/real_worker.py
+index 6462e09..3d64dae 100644
+--- a/src/alienintent/invocation_runtime/application/real_worker.py
++++ b/src/alienintent/invocation_runtime/application/real_worker.py
+@@ -20,12 +20,13 @@ from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, Mu
+ from alienintent.invocation_runtime.domain.verdict_admission import admit, claims, receipt as reject_receipt
+ from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, NO_TRUSTED_START, contained
+ from alienintent.execution_coordination.ports.worker_provider import (
+-    MISSING_TERMINAL_RESULT, NO_CHANGE, SCOPE_VIOLATION, WorkerInvocation, WorkerOutcome, WorkerProvider)
++    CANDIDATE_UNREADABLE, MISSING_TERMINAL_RESULT, NO_CHANGE, SCOPE_VIOLATION, WorkerInvocation, WorkerOutcome,
++    WorkerProvider)
+ from alienintent.invocation_runtime.application.mutation_harness import (
+     REVERTED_FAILS, SPEC_INVALID, SURVIVED, MutationHarness)
+ from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
+ from alienintent.invocation_runtime.domain.diagnostics import cause
+-from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
++from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CandidateUnreadable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
+ from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
+ from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
+ from alienintent.invocation_runtime.ports.source_control import SourceControl
+@@ -389,6 +390,8 @@ class RealWorkerProvider(WorkerProvider):
+                                                                invocation.work_identity, candidate).path
+                 else:
+                     self._source.retrieve_for_verification(candidate, workspace)
++            except CandidateUnreadable:  # cannot read it right now: infrastructure, never a custody judgment
++                return WorkerOutcome(CANDIDATE_UNREADABLE)
+             except CandidateUnavailable:
+                 return WorkerOutcome("candidate-unavailable")
+             self.verifier_provenance[invocation.correlation_id] = workspace.as_posix()
+@@ -613,6 +616,8 @@ class RealWorkerProvider(WorkerProvider):
+                                                        candidate).path
+             else:
+                 self._source.retrieve_for_verification(candidate, clone)
++        except CandidateUnreadable:  # cannot read it right now: infrastructure, never a custody judgment
++            return WorkerOutcome(CANDIDATE_UNREADABLE)
+         except CandidateUnavailable:
+             return WorkerOutcome.closed(candidate, ())
+         published = CANDIDATE_PUBLISHED_RECEIPT.format(identity=invocation.work_identity, revision=revision)
+diff --git a/src/alienintent/invocation_runtime/domain/runtime.py b/src/alienintent/invocation_runtime/domain/runtime.py
+index 91593d7..0d5c7e3 100644
+--- a/src/alienintent/invocation_runtime/domain/runtime.py
++++ b/src/alienintent/invocation_runtime/domain/runtime.py
+@@ -54,6 +54,13 @@ class CandidateUnavailable(ValueError):
+     pass
+ 
+ 
++class CandidateUnreadable(CandidateUnavailable):
++    """The exact candidate could not be read right now (the remote that holds it could not be asked): infrastructure,
++    retried on the same candidate, never a custody judgment (CUSTODY-READ-INFRASTRUCTURE-RETRY, Founder decision 48:
++    "cannot read the candidate right now" is not "candidate custody is invalid"). A remote that answers without the
++    exact candidate stays CandidateUnavailable and fails closed."""
++
++
+ class ScriptRejected(ValueError):
+     """A scripted worker step is not one the deterministic adapter can perform."""
+ 
+diff --git a/tests/composition/test_bounded_routine_launch.py b/tests/composition/test_bounded_routine_launch.py
+index b73f959..03050ae 100644
+--- a/tests/composition/test_bounded_routine_launch.py
++++ b/tests/composition/test_bounded_routine_launch.py
+@@ -8,6 +8,7 @@ limit of 1 and plan-derived (`automatic-on`) items. Labels are TEST DATA.
+ from __future__ import annotations
+ 
+ from dataclasses import asdict
++from pathlib import Path
+ import json
+ 
+ import pytest
+@@ -343,6 +344,61 @@ def test_a_closure_whose_remote_stays_unreadable_holds_as_infrastructure_visibly
+     assert closing.state(item.id).stage is DONE
+ 
+ 
++def _custody_reads(monkeypatch, plan):
++    """`retrieve_for_verification` answering by role from `plan` (a list per prefix: "unreadable", "refused" or
++    "read"; empty: read), so the VERIFIER's and CLOSURE's reads of the exact candidate can fail as infrastructure or as
++    a custody refusal."""
++    from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
++    from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable, CandidateUnreadable
++    real = GitSourceControl.retrieve_for_verification
++
++    def retrieve(self, candidate, workspace):
++        role = "closure" if Path(workspace).name.startswith("closure-") else "verifier"
++        step = plan[role].pop(0) if plan.get(role) else "read"
++        if step == "unreadable":
++            raise CandidateUnreadable("the remote holding the candidate cannot be read")
++        if step == "refused":
++            raise CandidateUnavailable("candidate revision is not retrievable for verifier")
++        return real(self, candidate, workspace)
++    monkeypatch.setattr(GitSourceControl, "retrieve_for_verification", retrieve)
++
++
++def test_a_candidate_that_cannot_be_read_right_now_is_retried_at_verify_and_closure_and_lands(closing, monkeypatch):
++    """CUSTODY-READ-INFRASTRUCTURE-RETRY (Founder decision 48): "cannot read the candidate right now" is not "custody
++    is invalid". The VERIFIER, then CLOSURE, cannot read the exact candidate once: each retries on the same candidate
++    with no Founder decision and no rejection, and the item lands."""
++    [item] = planned(closing, "ONLY")
++    _custody_reads(monkeypatch, {"verifier": ["unreadable"], "closure": ["unreadable"]})
++    pauses = []
++
++    summary = work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
++
++    assert pauses == ["verifier-retry", "closure-retry"] and closing.state(item.id).stage is DONE
++    assert closing.state(item.id).record.get("rejections", 0) == 0 and summary["authority_blocked"] == ()
++    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
++
++
++def test_a_candidate_unreadable_past_the_retries_holds_as_infrastructure_never_for_the_founder(closing, monkeypatch):
++    [item] = planned(closing, "ONLY")
++    _custody_reads(monkeypatch, {"verifier": ["unreadable"] * 3})
++
++    summary = work_run(closing)
++
++    state = closing.state(item.id)
++    assert (state.stage.value, state.outcome) == ("VERIFY", "infrastructure-hold")
++    assert summary["infrastructure_held"] == (item.id,) and summary["authority_blocked"] == ()
++    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
++
++
++def test_a_candidate_the_remote_answers_without_still_fails_closed_as_a_custody_refusal(closing, monkeypatch):
++    [item] = planned(closing, "ONLY")
++    _custody_reads(monkeypatch, {"verifier": ["refused"]})
++
++    summary = work_run(closing)
++
++    assert closing.state(item.id).outcome == "authority-block" and summary["authority_blocked"] == (item.id,)
++
++
+ class Crash(BaseException):
+     """The process dying: nothing after it runs, and no `except Exception` catches it."""
+ 
+diff --git a/tests/execution_coordination/test_factory_coordinator.py b/tests/execution_coordination/test_factory_coordinator.py
+index ddeb7bb..3f3ee1e 100644
+--- a/tests/execution_coordination/test_factory_coordinator.py
++++ b/tests/execution_coordination/test_factory_coordinator.py
+@@ -1121,6 +1121,42 @@ def test_a_closure_outcome_that_is_not_infrastructure_resets_the_closure_streak(
+     assert advanced.fields["closure_infrastructure_retries"] == 0
+ 
+ 
++def test_a_verifier_that_cannot_read_the_candidate_retries_on_the_same_candidate_with_no_founder_decision(
++        tmp_path: Path) -> None:
++    """CUSTODY-READ-INFRASTRUCTURE-RETRY (Founder decision 48): the exact candidate could not be read right now. The
++    item stays at VERIFY on the same candidate, no rejection or attempt is used, a later pass retries, and VERIFY
++    continues once it can be read."""
++    _, _, _, provider = _api()
++    coordinator, worker, store = _wip(tmp_path, [_item("V", 0, 1)], {"V": ["success"]}, Limit(1),
++                                      verdicts={"V": [provider.CANDIDATE_UNREADABLE, "accept"]})
++    coordinator.start()
++    state = coordinator.state("V")
++    candidate = state.state.candidate
++    assert (state.stage, state.outcome, state.record["verifier_custody_retries"]) == (
++        LifecycleStage.VERIFY, "verifier-retry", 1)
++    coordinator.run()
++    assert coordinator.state("V").stage is LifecycleStage.DONE and coordinator.state("V").state.candidate == candidate
++    assert coordinator.state("V").record.get("rejections", 0) == 0 and _founder_decisions(store) == {}
++
++
++def test_a_candidate_unreadable_past_the_retries_holds_as_infrastructure_and_a_custody_refusal_still_fails_closed(
++        tmp_path: Path) -> None:
++    _, _, _, provider = _api()
++    coordinator, worker, store = _wip(tmp_path, [_item("X", 0, 1), _item("Y", 1, 2)],
++                                      {"X": ["success"], "Y": ["success"]}, Limit(2), verdicts={"X": [provider.CANDIDATE_UNREADABLE] * 3,
++                                                          "Y": ["candidate-unavailable"]})
++    coordinator.run()
++    held = coordinator.state("X")
++    assert (held.stage, held.outcome, held.record["hold_reason"]) == (
++        LifecycleStage.VERIFY, "infrastructure-hold", "verifier-infrastructure-exhausted:candidate-unreadable")
++    assert "X" not in _founder_decisions(store)
++    assert coordinator.state("Y").outcome == "authority-block" and "Y" in _founder_decisions(store)
++    restarted, _, _ = _wip(tmp_path, [_item("X", 0, 1)], {}, Limit(2), verdicts={"X": ["accept"]},
++                           store=SQLiteOperationalStore(tmp_path / "run.sqlite"))
++    restarted.run()
++    assert restarted.state("X").stage is LifecycleStage.DONE
++
++
+ def test_work_launch_names_an_infrastructure_hold_in_its_summary(tmp_path: Path) -> None:
+     _, _, _, provider = _api()
+     coordinator, worker, store = _wip(tmp_path, [_item("L", 0, 1)], {"L": [provider.CANONICAL_MAIN_UNAVAILABLE] * 3},
+diff --git a/tests/invocation_runtime/test_git_source_control.py b/tests/invocation_runtime/test_git_source_control.py
+index a9d092f..b786526 100644
+--- a/tests/invocation_runtime/test_git_source_control.py
++++ b/tests/invocation_runtime/test_git_source_control.py
+@@ -12,6 +12,7 @@ import pytest
+ 
+ from alienintent.invocation_runtime.adapters import git_source_control as module
+ from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
++from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable, CandidateUnreadable
+ from alienintent.invocation_runtime.ports.source_control import PublicationFailed, PublishRef
+ 
+ IDENTITY = ("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false")
+@@ -508,3 +509,85 @@ def test_the_worker_clone_and_fetch_give_the_ownership_exception_to_upload_pack_
+     assert f"--upload-pack=git -c safe.directory={handover.packets / '.git'} upload-pack" in clone
+     assert f"--upload-pack=git -c safe.directory={handover.launch / 'intake.git'} upload-pack" in fetch
+     assert not [word for argv in (clone, fetch) for word in argv if word.startswith("safe.directory=")]
++
++
++# --- CUSTODY-READ-INFRASTRUCTURE-RETRY (Founder decision 48): "cannot read the candidate right now" is not "custody is
++# invalid". Only a remote that cannot be read is CandidateUnreadable; a remote that answers without the exact candidate
++# stays the custody refusal CandidateUnavailable.
++
++def _published(repo, tmp_path):
++    from hashlib import sha256
++    from alienintent.execution_coordination.domain.custody import CandidateRef
++    clone, remote, commits = repo
++    git(clone, "push", "-q", "origin", f"{commits[2]}:refs/heads/candidate/c1")
++    return lambda locator_remote=remote, branch="candidate/c1": CandidateRef.source_revision(
++        "sha256:" + sha256(commits[2].encode()).hexdigest(), f"git:{locator_remote}#{branch}@{commits[2]}")
++
++
++def test_retrieval_from_a_remote_that_cannot_be_read_is_unreadable_never_a_custody_judgment(repo, tmp_path):
++    candidate = _published(repo, tmp_path)
++    with pytest.raises(CandidateUnreadable):
++        GitSourceControl().retrieve_for_verification(candidate(tmp_path / "unreachable.git"), tmp_path / "v1")
++    assert not (tmp_path / "v1").exists()
++    retrieved = GitSourceControl().retrieve_for_verification(candidate(), tmp_path / "v2")
++    assert retrieved.verify_admissible
++
++
++@pytest.mark.parametrize("case", ["branch-missing", "branch-elsewhere"])
++def test_retrieval_from_a_remote_that_answers_without_the_exact_candidate_is_a_custody_refusal(repo, tmp_path, case):
++    clone, remote, commits = repo
++    candidate = _published(repo, tmp_path)
++    if case == "branch-elsewhere":
++        git(clone, "push", "-q", "-f", "origin", f"{commits[1]}:refs/heads/candidate/c1")
++    with pytest.raises(CandidateUnavailable) as refused:
++        GitSourceControl().retrieve_for_verification(
++            candidate(branch="candidate/gone") if case == "branch-missing" else candidate(), tmp_path / "v1")
++    assert not isinstance(refused.value, CandidateUnreadable)
++
++
++def test_a_worker_clone_of_a_candidate_whose_remote_cannot_be_read_is_unreadable_and_a_missing_one_a_refusal(
++        handover, monkeypatch):
++    """The worker path reads the remote once (`ls-remote` of the packets remote); everything after reads the local
++    intake. That one read failing is CandidateUnreadable; a remote answering without the candidate branch, or an
++    intake not holding the exact candidate, stays the custody refusal."""
++    from dataclasses import replace
++    workspace, claimed = handover.produce()
++    handover.source.hand_over("c1", workspace, claimed, handover.base)
++    candidate = handover.source.publish_intake("c1", "candidate/c1", claimed, handover.launch / "verifier" / "p-c1")
++    real = handover.source.remote_url
++    monkeypatch.setattr(handover.source, "remote_url", lambda: str(handover.tmp / "unreachable.git"))
++    with pytest.raises(CandidateUnreadable):
++        handover.source.candidate_clone("verifier", "v1", "owner", candidate)
++    monkeypatch.setattr(handover.source, "remote_url", real)
++    gone = replace(candidate, locator=candidate.locator.replace("#candidate/c1@", "#candidate/gone@"))
++    with pytest.raises(CandidateUnavailable) as refused:
++        handover.source.candidate_clone("verifier", "v2", "owner", gone)
++    assert not isinstance(refused.value, CandidateUnreadable)
++    clone = handover.source.candidate_clone("verifier", "v3", "owner", candidate).path
++    assert git(clone, "rev-parse", "HEAD") == claimed
++
++
++def test_a_clone_that_fails_after_the_remote_answered_is_unreadable(repo, tmp_path, monkeypatch):
++    candidate = _published(repo, tmp_path)
++    real = GitSourceControl._git
++
++    def failing_clone(self, *args, cwd=None):
++        if args[0] == "clone":
++            raise CandidateUnavailable("git operation failed")
++        return real(self, *args, cwd=cwd)
++    monkeypatch.setattr(GitSourceControl, "_git", failing_clone)
++    with pytest.raises(CandidateUnreadable):
++        GitSourceControl().retrieve_for_verification(candidate(), tmp_path / "v1")
++
++
++def test_a_worker_clone_from_an_intake_that_is_gone_fails_closed_never_retried_as_unreadable(handover):
++    """No intake repository means it does not hold the candidate: a custody refusal, decided locally before the
++    remote is asked, never an infrastructure retry."""
++    import shutil
++    workspace, claimed = handover.produce()
++    handover.source.hand_over("c1", workspace, claimed, handover.base)
++    candidate = handover.source.publish_intake("c1", "candidate/c1", claimed, handover.launch / "verifier" / "p-c1")
++    shutil.rmtree(handover.launch / "intake.git")
++    with pytest.raises(CandidateUnavailable) as refused:
++        handover.source.candidate_clone("verifier", "v1", "owner", candidate)
++    assert not isinstance(refused.value, CandidateUnreadable)
