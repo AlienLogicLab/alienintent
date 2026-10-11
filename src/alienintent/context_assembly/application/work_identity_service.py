@@ -76,6 +76,10 @@ class WorkIdentityService:
     def find(self, id_or_label: str) -> WorkItem | None:
         return self.items.find(id_or_label)
 
+    def packet_items(self) -> tuple[WorkItem, ...]:
+        """Every non-retired item registered from a packet, oldest first."""
+        return self.items.packet_items()
+
     def children(self, identity: str) -> tuple[WorkItem, ...]:
         return self.items.children(identity)
 

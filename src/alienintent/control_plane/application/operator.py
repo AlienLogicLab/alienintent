@@ -127,6 +127,16 @@ class InheritedReleases(Protocol):
     def release(self, id_or_label: str) -> Any: ...
 
 
+class WorkPreparations(Protocol):
+    def prepare_next(self) -> object: ...
+
+
+def prepare_work(preparation: WorkPreparations) -> dict[str, object]:
+    """`work prepare`: one Work Preparation of the next eligible plan obligation (WORK-PREPARATION-REFILL R3a); its
+    typed answer (released, refused, stopped, nothing-eligible, in-progress, ...) as the read answer."""
+    return asdict(preparation.prepare_next())
+
+
 def release_work(release: InheritedReleases, id_or_label: str) -> dict[str, object]:
     """`work release`: the plan-derived item's evidence reference, release record and card, or a refusal returned as
     the read answer naming its code. No Founder words: the authority is the current approved plan's."""

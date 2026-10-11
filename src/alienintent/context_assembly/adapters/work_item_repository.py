@@ -229,6 +229,10 @@ class SQLiteWorkItemRepository(WorkItemRepository):
         """Explicit parent links only; a family grows by authorized splits, never by a loop."""
         return tuple(self._rows("parent_id = ? ORDER BY created_at, id", (identity,)))
 
+    def packet_items(self) -> tuple[WorkItem, ...]:
+        """Every non-retired item registered from a packet, oldest first (Work Preparation's obligation state)."""
+        return tuple(self._rows("retired_at IS NULL AND request_ref LIKE 'packet:%' ORDER BY created_at, id", ()))
+
     def _by_id(self, identity: str) -> WorkItem:
         rows = self._rows("id = ?", (identity,))
         if not rows:
