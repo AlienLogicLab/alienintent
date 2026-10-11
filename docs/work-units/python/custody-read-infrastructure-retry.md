@@ -1,7 +1,7 @@
 # Work unit: candidate read failures are infrastructure (CUSTODY-READ-INFRASTRUCTURE-RETRY)
 
-**Label:** `CUSTODY-READ-INFRASTRUCTURE-RETRY` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 1, 2026-10-11. Not registered.
+**Label:** `CUSTODY-READ-INFRASTRUCTURE-RETRY` (a document label; permanent id `9a38215c-54b8-4e01-926e-cb661edca88a`).
+**Status:** Revision 1, 2026-10-11. Registered as work item 9a38215c-54b8-4e01-926e-cb661edca88a.
 **Authority:** the Founder's explicit bounded authorization (decisions section 48 and its addendum, quoted in
 `fixed_decisions`); released by `work authorize` with those words and one bootstrap `work launch`.
 **Starting revision:** main `fb45106`.
@@ -11,7 +11,7 @@
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "9a38215c-54b8-4e01-926e-cb661edca88a",
  "version": "revision-1",
  "intent": "\"Cannot read the candidate right now\" is not \"candidate custody is invalid\": a transient inability of the VERIFIER or CLOSURE to read the exact candidate (the remote holding it cannot be asked) is a typed infrastructure outcome, `candidate-unreadable`, that keeps the stage on the same candidate, retries at most VERIFIER_RETRY_LIMIT times in a row and then holds as typed infrastructure, never an authority hold or a Founder decision; a remote that answers without the exact candidate, an intake not holding it, a digest mismatch or a malformed locator still fail closed as custody refusals.",
  "satisfied_requirement_ids": [
