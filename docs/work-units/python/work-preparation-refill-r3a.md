@@ -144,8 +144,14 @@ What the diff does:
 
 ## 3. Acceptance checks
 
-1. The targeted proof set, the block below, passes (only the files that exercise the changed code; the regression
-   gate owns the rest, decisions section 52).
+1. The targeted proof set, the block below, passes. It is deliberately small (Founder decision 52: the smallest
+   sufficiently complete set; the regression gate owns whole-suite coverage): the two new test files of this diff and
+   `tests/context_assembly/test_obligation_state.py`, which already exists at main `821e95d` (landed by R1) and
+   exercises the obligation state `prepare_next` relies on. The new tests this diff adds to the large existing files
+   `tests/composition/test_work_registry.py` and `tests/control_plane/test_cli.py` run by exact node id: the
+   registry ones through the `alienintent-mutations` block below (each mutation names them), the `work prepare` CLI test
+   by node id `tests/control_plane/test_cli.py::test_work_prepare_runs_one_preparation_and_renders_its_typed_answer`;
+   every other test in those files is run by the regression gate.
 2. `python3 tools/fitness/check_architecture.py --root src/alienintent --check all` passes.
 3. **No test id disappears**: `python3 -m pytest --collect-only -q tests` at the starting revision and at the candidate;
    every id collected at the starting revision is collected at the candidate (collection only; nothing runs).
