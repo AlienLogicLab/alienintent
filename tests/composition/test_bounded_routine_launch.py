@@ -8,6 +8,7 @@ limit of 1 and plan-derived (`automatic-on`) items. Labels are TEST DATA.
 from __future__ import annotations
 
 from dataclasses import asdict
+from pathlib import Path
 import json
 
 import pytest
@@ -341,6 +342,61 @@ def test_a_closure_whose_remote_stays_unreadable_holds_as_infrastructure_visibly
     monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", fetch)
     work_run(closing)
     assert closing.state(item.id).stage is DONE
+
+
+def _custody_reads(monkeypatch, plan):
+    """`retrieve_for_verification` answering by role from `plan` (a list per prefix: "unreadable", "refused" or
+    "read"; empty: read), so the VERIFIER's and CLOSURE's reads of the exact candidate can fail as infrastructure or as
+    a custody refusal."""
+    from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
+    from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable, CandidateUnreadable
+    real = GitSourceControl.retrieve_for_verification
+
+    def retrieve(self, candidate, workspace):
+        role = "closure" if Path(workspace).name.startswith("closure-") else "verifier"
+        step = plan[role].pop(0) if plan.get(role) else "read"
+        if step == "unreadable":
+            raise CandidateUnreadable("the remote holding the candidate cannot be read")
+        if step == "refused":
+            raise CandidateUnavailable("candidate revision is not retrievable for verifier")
+        return real(self, candidate, workspace)
+    monkeypatch.setattr(GitSourceControl, "retrieve_for_verification", retrieve)
+
+
+def test_a_candidate_that_cannot_be_read_right_now_is_retried_at_verify_and_closure_and_lands(closing, monkeypatch):
+    """CUSTODY-READ-INFRASTRUCTURE-RETRY (Founder decision 48): "cannot read the candidate right now" is not "custody
+    is invalid". The VERIFIER, then CLOSURE, cannot read the exact candidate once: each retries on the same candidate
+    with no Founder decision and no rejection, and the item lands."""
+    [item] = planned(closing, "ONLY")
+    _custody_reads(monkeypatch, {"verifier": ["unreadable"], "closure": ["unreadable"]})
+    pauses = []
+
+    summary = work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
+
+    assert pauses == ["verifier-retry", "closure-retry"] and closing.state(item.id).stage is DONE
+    assert closing.state(item.id).record.get("rejections", 0) == 0 and summary["authority_blocked"] == ()
+    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
+
+
+def test_a_candidate_unreadable_past_the_retries_holds_as_infrastructure_never_for_the_founder(closing, monkeypatch):
+    [item] = planned(closing, "ONLY")
+    _custody_reads(monkeypatch, {"verifier": ["unreadable"] * 3})
+
+    summary = work_run(closing)
+
+    state = closing.state(item.id)
+    assert (state.stage.value, state.outcome) == ("VERIFY", "infrastructure-hold")
+    assert summary["infrastructure_held"] == (item.id,) and summary["authority_blocked"] == ()
+    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
+
+
+def test_a_candidate_the_remote_answers_without_still_fails_closed_as_a_custody_refusal(closing, monkeypatch):
+    [item] = planned(closing, "ONLY")
+    _custody_reads(monkeypatch, {"verifier": ["refused"]})
+
+    summary = work_run(closing)
+
+    assert closing.state(item.id).outcome == "authority-block" and summary["authority_blocked"] == (item.id,)
 
 
 class Crash(BaseException):

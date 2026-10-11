@@ -20,12 +20,13 @@ from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, Mu
 from alienintent.invocation_runtime.domain.verdict_admission import admit, claims, receipt as reject_receipt
 from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, NO_TRUSTED_START, contained
 from alienintent.execution_coordination.ports.worker_provider import (
-    MISSING_TERMINAL_RESULT, NO_CHANGE, SCOPE_VIOLATION, WorkerInvocation, WorkerOutcome, WorkerProvider)
+    CANDIDATE_UNREADABLE, MISSING_TERMINAL_RESULT, NO_CHANGE, SCOPE_VIOLATION, WorkerInvocation, WorkerOutcome,
+    WorkerProvider)
 from alienintent.invocation_runtime.application.mutation_harness import (
     REVERTED_FAILS, SPEC_INVALID, SURVIVED, MutationHarness)
 from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
 from alienintent.invocation_runtime.domain.diagnostics import cause
-from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
+from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CandidateUnreadable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports.source_control import SourceControl
@@ -389,6 +390,8 @@ class RealWorkerProvider(WorkerProvider):
                                                                invocation.work_identity, candidate).path
                 else:
                     self._source.retrieve_for_verification(candidate, workspace)
+            except CandidateUnreadable:  # cannot read it right now: infrastructure, never a custody judgment
+                return WorkerOutcome(CANDIDATE_UNREADABLE)
             except CandidateUnavailable:
                 return WorkerOutcome("candidate-unavailable")
             self.verifier_provenance[invocation.correlation_id] = workspace.as_posix()
@@ -613,6 +616,8 @@ class RealWorkerProvider(WorkerProvider):
                                                        candidate).path
             else:
                 self._source.retrieve_for_verification(candidate, clone)
+        except CandidateUnreadable:  # cannot read it right now: infrastructure, never a custody judgment
+            return WorkerOutcome(CANDIDATE_UNREADABLE)
         except CandidateUnavailable:
             return WorkerOutcome.closed(candidate, ())
         published = CANDIDATE_PUBLISHED_RECEIPT.format(identity=invocation.work_identity, revision=revision)

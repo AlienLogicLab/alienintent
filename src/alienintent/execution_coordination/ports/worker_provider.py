@@ -37,6 +37,12 @@ VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "v
 # keeps the stage and retries on a later pass, never an authority hold.
 CANONICAL_MAIN_UNAVAILABLE = "canonical-main-unavailable"
 PRODUCER_INFRASTRUCTURE = frozenset({CANONICAL_MAIN_UNAVAILABLE})
+# A VERIFIER or CLOSURE that could not read the exact candidate right now (the remote holding it could not be asked):
+# no custody judgment was made (CUSTODY-READ-INFRASTRUCTURE-RETRY, Founder decision 48); the coordinator keeps the
+# stage on the same candidate and retries, then holds as typed infrastructure, never an authority hold. A remote that
+# answers without the exact candidate stays `candidate-unavailable`, a custody refusal.
+CANDIDATE_UNREADABLE = "candidate-unreadable"
+CANDIDATE_READ_INFRASTRUCTURE = frozenset({CANDIDATE_UNREADABLE})
 
 
 @dataclass(frozen=True)
