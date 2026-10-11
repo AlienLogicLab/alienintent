@@ -16,6 +16,7 @@ from alienintent.control_plane.application.operator import (
     NOT_AVAILABLE_IN_WORKER_PROFILE, NOT_IN_EXPORT, RETRY_PAUSE_SECONDS, OperatorControlPlane, OperatorDenied,
     approve_plan_work, assess_work, authorize_work, context_work,
     decide_work, display_work, exclusive_launch_work, exclusive_run_work, import_work, link_work, migrate_work,
+    prepare_work,
     record_completed_work, watch_work,
     register_work, release_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
@@ -116,6 +117,7 @@ def _parser() -> argparse.ArgumentParser:
     for name in ("commit", "quote"):
         approve_plan.add_argument("--" + name, required=True)
     release = _sanitized(work.add_parser("release")); release.add_argument("target")
+    _sanitized(work.add_parser("prepare"))
     completed = _sanitized(work.add_parser("record-completed")); completed.add_argument("target")
     for name in ("candidate", "landing", "record", "approval", "quote"):
         completed.add_argument("--" + name, required=True)
@@ -265,6 +267,12 @@ def main(argv: list[str] | None = None) -> int:
                     _render({"error": "readiness-not-configured"}, args.json)
                     return 1
                 _render(approve_plan_work(registry.plan_approval, args.commit, args.quote), args.json)
+                return 0
+            if args.work_command == "prepare":
+                if getattr(registry, "preparation", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                _render(prepare_work(registry.preparation), args.json)
                 return 0
             if args.work_command == "release":
                 if getattr(registry, "release", None) is None:
